@@ -351,17 +351,19 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
       nomorPenghasil: specificLabel.nomor_penghasil || "KLH - 10410"
     };
 
-    // Get waste symbols for this specific label
-    const wasteSymbols = getWasteSymbols(
-      specificLabel.kode_limbah,
-      specificLabel.sifat_limbah,
-      labelData.request_info?.bentuk_limbah || specificLabel.bentuk_limbah
-    );
-
-    console.log("Hazard Symbols - Kode Limbah:", specificLabel.kode_limbah);
-    console.log("Hazard Symbols - Sifat Limbah:", specificLabel.sifat_limbah);
-    console.log("Hazard Symbols - Bentuk Limbah:", labelData.request_info?.bentuk_limbah || specificLabel.bentuk_limbah);
-    console.log("Hazard Symbols - Generated:", wasteSymbols);
+    // Get waste symbols (enhancement: hazard symbols)
+    const kodeLimbah = specificLabel.kode_limbah;
+    const sifatLimbah = specificLabel.sifat_limbah;
+    const bentukLimbah = labelData.request_info?.bentuk_limbah || specificLabel.bentuk_limbah;
+    
+    console.log("=== HAZARD SYMBOLS DEBUG ===");
+    console.log("Kode Limbah:", kodeLimbah);
+    console.log("Sifat Limbah:", sifatLimbah);
+    console.log("Bentuk Limbah:", bentukLimbah);
+    
+    const wasteSymbols = getWasteSymbols(kodeLimbah, sifatLimbah, bentukLimbah);
+    console.log("Generated Symbol Paths:", wasteSymbols);
+    console.log("Number of symbols:", wasteSymbols.length);
 
     // Scale all dimensions
     const s = scale;
@@ -395,18 +397,25 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     // Load waste symbols (enhancement: hazard symbols)
     const wasteSymbolImages = [];
     if (wasteSymbols.length > 0) {
-      for (const symbolPath of wasteSymbols) {
+      console.log("=== LOADING HAZARD SYMBOLS ===");
+      for (let i = 0; i < wasteSymbols.length; i++) {
+        const symbolPath = wasteSymbols[i];
+        console.log(`Attempting to load symbol ${i + 1}/${wasteSymbols.length}: ${symbolPath}`);
         try {
           const symbolImg = await loadImage(symbolPath);
           wasteSymbolImages.push({
             img: symbolImg,
             path: symbolPath,
           });
+          console.log(`✓ Successfully loaded: ${symbolPath}`);
         } catch (error) {
-          console.warn(`Failed to load hazard symbol: ${symbolPath}`, error);
+          console.error(`✗ Failed to load hazard symbol: ${symbolPath}`, error);
+          console.error(`Error details:`, error.message);
         }
       }
-      console.log(`Loaded ${wasteSymbolImages.length} out of ${wasteSymbols.length} hazard symbols`);
+      console.log(`=== SUMMARY: Loaded ${wasteSymbolImages.length} out of ${wasteSymbols.length} hazard symbols ===`);
+    } else {
+      console.log("No hazard symbols to load for this waste item.");
     }
     
     // Background
@@ -495,6 +504,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
 
     // Render hazard symbols (enhancement: positioned in top-right of yellow area)
     if (wasteSymbolImages.length > 0) {
+      console.log(`=== RENDERING ${wasteSymbolImages.length} HAZARD SYMBOLS ===`);
       // Calculate symbol positioning in top-right area of yellow warning section
       const yellowAreaTop = 105 * s; // Top of yellow warning area
       const separatorLineY = 195 * s; // Where the black line is
@@ -502,6 +512,8 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
       const symbolSize = Math.min(availableHeight * 0.8, 60 * s); // Reasonable symbol size
       const symbolSpacing = symbolSize + 8 * s; // Symbol spacing
       const rightMargin = 25 * s; // Right margin
+
+      console.log(`Symbol positioning: yellowAreaTop=${yellowAreaTop}, symbolSize=${symbolSize}, rightMargin=${rightMargin}`);
 
       // Calculate symbols position - align to right side of warning area
       const symbolsEndX = width * s - rightMargin;
@@ -513,8 +525,12 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
       // Position symbols starting from top of yellow area with padding
       const symbolsY = yellowAreaTop + 15 * s; // Small padding from top
 
+      console.log(`Symbols will be rendered from X=${symbolsStartX} to X=${symbolsEndX}, Y=${symbolsY}`);
+
       wasteSymbolImages.forEach((symbolObj, index) => {
         const symbolX = symbolsStartX + index * symbolSpacing;
+        
+        console.log(`Rendering symbol ${index + 1}: ${symbolObj.path} at position (${symbolX}, ${symbolsY}) size ${symbolSize}x${symbolSize}`);
 
         // Save context state for symbol rendering
         ctx.save();
@@ -528,7 +544,9 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
         ctx.restore();
       });
 
-      console.log(`Rendered ${wasteSymbolImages.length} hazard symbols in yellow warning area`);
+      console.log(`✓ Successfully rendered ${wasteSymbolImages.length} hazard symbols in yellow warning area`);
+    } else {
+      console.log("No hazard symbols to render.");
     }
     
     // Horizontal separator line (very thick black line)

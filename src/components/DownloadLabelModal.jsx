@@ -272,41 +272,41 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     // Special case for A106d - requires checking bentuk_limbah for flame symbol type
     if (kodeLimbah === "A106d") {
       // A106d always has toxic symbol
-      symbols.push("/hazard/beracun.png");
+      symbols.push("/ePemusnahanLimbah-dev/hazard/beracun.png");
 
       // A106d has "mudah menyala/mudah terbakar" - check bentuk limbah for appropriate symbol
       if (bentuk === "Cair") {
         // For liquid A106d, use the available liquid flammable symbol
-        symbols.push("/hazard/cairan_muda_terbakar.png");
+        symbols.push("/ePemusnahanLimbah-dev/hazard/cairan_muda_terbakar.png");
       } else if (bentuk === "Padat") {
         // For solid A106d, use padatan mudah menyala symbol
-        symbols.push("/hazard/padatan_mudah_menyala.png");
+        symbols.push("/ePemusnahanLimbah-dev/hazard/padatan_mudah_menyala.png");
       }
     } else {
       // General rules for other waste codes - sifat_limbah already contains "cairan" or "padatan"
 
       // 1. Check for toxic/poisonous
       if (sifatLower.includes("beracun") || sifatLower.includes("toxic")) {
-        symbols.push("/hazard/beracun.png");
+        symbols.push("/ePemusnahanLimbah-dev/hazard/beracun.png");
       }
 
       // 2. Check for specific flammable types - using updated file names
       if (sifatLower.includes("cairan mudah menyala") || sifatLower.includes("cairan mudah terbakar")) {
-        symbols.push("/hazard/cairan_muda_terbakar.png");
+        symbols.push("/ePemusnahanLimbah-dev/hazard/cairan_muda_terbakar.png");
       }
 
       if (sifatLower.includes("padatan mudah menyala")) {
-        symbols.push("/hazard/padatan_mudah_menyala.png");
+        symbols.push("/ePemusnahanLimbah-dev/hazard/padatan_mudah_menyala.png");
       }
 
       if (sifatLower.includes("padatan mudah terbakar")) {
         // Use padatan mudah menyala as fallback since padatan_mudah_terbakar.png doesn't exist
-        symbols.push("/hazard/padatan_mudah_menyala.png");
+        symbols.push("/ePemusnahanLimbah-dev/hazard/padatan_mudah_menyala.png");
       }
 
       // 3. Check for explosive - now available!
       if (sifatLower.includes("mudah meledak") || sifatLower.includes("explosive")) {
-        symbols.push("/hazard/mudah_meledak.png");
+        symbols.push("/ePemusnahanLimbah-dev/hazard/mudah_meledak.png");
       }
 
       // 4. Check for campuran (mixture) - file no longer available
@@ -318,7 +318,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
 
     // Default fallback - if no symbols found, add general toxic
     if (symbols.length === 0) {
-      symbols.push("/hazard/beracun.png");
+      symbols.push("/ePemusnahanLimbah-dev/hazard/beracun.png");
     }
 
     // Remove duplicates and limit to maximum 3 symbols

@@ -381,7 +381,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     // Load logo image first
     let logoImg;
     try {
-      logoImg = await loadImage('ePemusnahanLimbah-dev/logo_bnw.png');
+      logoImg = await loadImage('/ePemusnahanLimbah-dev/logo_bnw.png');
     } catch (error) {
       console.warn('Failed to load logo image:', error);
       logoImg = null;

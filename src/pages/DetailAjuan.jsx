@@ -39,10 +39,28 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
   const [jenisOptions, setJenisOptions] = useState([]);
   const [golonganOptions, setGolonganOptions] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key
+  const [lampiranFilter, setLampiranFilter] = useState({
+    namaLimbah: '',
+    bobot: '',
+    nomorAnalisa: ''
+  });
 
   // Function to force refresh data
   const refreshData = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  // Filter lampiran berdasarkan kriteria
+  const getFilteredLampiran = () => {
+    if (!data?.lampiran) return [];
+    
+    return data.lampiran.filter(item => {
+      return (
+        (lampiranFilter.namaLimbah === '' || item.namaLimbah.toLowerCase().includes(lampiranFilter.namaLimbah.toLowerCase())) &&
+        (lampiranFilter.bobot === '' || (item.bobot || '').toString().includes(lampiranFilter.bobot)) &&
+        (lampiranFilter.nomorAnalisa === '' || (item.nomorAnalisa || '').toLowerCase().includes(lampiranFilter.nomorAnalisa.toLowerCase()))
+      );
+    });
   };
 
   // If navigationData.fromView === 'approved', hide approve/reject actions
@@ -609,6 +627,52 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
         {/* Lampiran Section */}
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Lampiran</h3>
+          
+          {/* Filter Controls */}
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filter Nama Limbah
+              </label>
+              <input
+                type="text"
+                placeholder="Cari nama limbah..."
+                value={lampiranFilter.namaLimbah}
+                onChange={(e) => setLampiranFilter({ ...lampiranFilter, namaLimbah: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filter Bobot (gram)
+              </label>
+              <input
+                type="text"
+                placeholder="Cari bobot..."
+                value={lampiranFilter.bobot}
+                onChange={(e) => setLampiranFilter({ ...lampiranFilter, bobot: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filter No. Bets/No. Analisa
+              </label>
+              <input
+                type="text"
+                placeholder="Cari no. analisa..."
+                value={lampiranFilter.nomorAnalisa}
+                onChange={(e) => setLampiranFilter({ ...lampiranFilter, nomorAnalisa: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+          
+          {/* Results count */}
+          <div className="mb-3 text-sm text-gray-600">
+            Menampilkan {getFilteredLampiran().length} dari {data?.lampiran?.length || 0} data
+          </div>
+          
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-green-600">
@@ -649,7 +713,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {data.lampiran.map((item, idx) => {
+                {getFilteredLampiran().length > 0 ? getFilteredLampiran().map((item, idx) => {
                   const jenisData = jenisOptions.find(j => j.id === item.jenis_limbah_b3_id);
                   
                   return (
@@ -689,7 +753,13 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
                     </td>
                   </tr>
                   );
-                })}
+                }) : (
+                  <tr>
+                    <td colSpan="11" className="px-6 py-4 text-center text-sm text-gray-500">
+                      Tidak ada data yang sesuai dengan filter
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

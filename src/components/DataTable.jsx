@@ -56,7 +56,7 @@ const formatTimestamp = (timestamp) => {
 
 const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedColumn, setSelectedColumn] = useState("");
+  const [selectedColumn, setSelectedColumn] = useState("noPermohonan");
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -177,11 +177,15 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
 
   // Define column mappings
   const columnOptions = [
-    { value: "tanggal", label: "Tgl. Pengajuan" },
     { value: "noPermohonan", label: "No. Permohonan" },
+    { value: "tanggal", label: "Tgl. Pengajuan" },
     { value: "golongan", label: "Golongan" },
     { value: "jenis", label: "Jenis" },
-    { value: "status", label: "Status" }
+    { value: "status", label: "Status" },
+    { value: "bagian", label: "Bagian" },
+    { value: "namaLimbah", label: "Nama Limbah" },
+    { value: "nomorAnalisa", label: "No. Bets/Analisa" },
+    { value: "bobot", label: "Bobot (gram)" }
   ];
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);

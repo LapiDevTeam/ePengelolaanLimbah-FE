@@ -1116,6 +1116,18 @@ export const dataAPI = {
     }
   },
 
+  // Download Excel file with permohonan details by date range
+  downloadPermohonanByDateRangeExcel: async (startDate, endDate) => {
+    try {
+      const response = await api.get(`/document-generation/permohonan/range/excel?start_date=${startDate}&end_date=${endDate}`, { 
+        responseType: 'arraybuffer' 
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // === WORKFLOW API ENDPOINTS ===
 
   // Get all approval workflows specific to a request

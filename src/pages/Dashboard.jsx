@@ -8,6 +8,9 @@ const Dashboard = ({ onNavigate }) => {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [startDatePermohonan, setStartDatePermohonan] = useState('')
+  const [endDatePermohonan, setEndDatePermohonan] = useState('')
+  const [isDownloadingPermohonan, setIsDownloadingPermohonan] = useState(false)
   const [stats, setStats] = useState({
     myRequests: 0,
     pendingApprovals: 0,
@@ -83,6 +86,46 @@ const Dashboard = ({ onNavigate }) => {
       showError('Gagal generate logbook: ' + error.message)
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const handleDownloadPermohonanByDateRange = async () => {
+    if (!startDatePermohonan || !endDatePermohonan) {
+      showWarning('Silakan pilih tanggal mulai dan tanggal akhir')
+      return
+    }
+
+    if (new Date(startDatePermohonan) > new Date(endDatePermohonan)) {
+      showWarning('Tanggal mulai tidak boleh lebih besar dari tanggal akhir')
+      return
+    }
+
+    setIsDownloadingPermohonan(true)
+    
+    try {
+      // Call the new endpoint directly via axios
+      const response = await api.downloadPermohonanByDateRangeExcel(startDatePermohonan, endDatePermohonan)
+      
+      // Handle response which is blob data
+      const blob = new Blob([response.data], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.style.display = 'none'
+      link.href = url
+      link.download = `lampiran-permohonan-${startDatePermohonan}_to_${endDatePermohonan}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(link)
+      
+      showSuccess('File lampiran permohonan berhasil diunduh!')
+    } catch (error) {
+      console.error('Error downloading permohonan:', error)
+      showError('Gagal download lampiran permohonan: ' + (error.response?.data?.message || error.message))
+    } finally {
+      setIsDownloadingPermohonan(false)
     }
   }
 
@@ -260,6 +303,64 @@ const Dashboard = ({ onNavigate }) => {
           <p>• Logbook akan mengelompokkan data berdasarkan jenis limbah</p>
           <p>• Setiap jenis limbah akan memiliki sheet terpisah</p>
           <p>• Data diambil dari permohonan dengan status Completed</p>
+        </div>
+      </div>
+
+      {/* Download Lampiran Permohonan Section */}
+      <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
+        <h2 className="text-xl font-semibold text-green-800 mb-4">Download Lampiran Permohonan</h2>        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
+            <label htmlFor="start-date-permohonan" className="block text-sm font-medium text-gray-700 mb-2">
+              Tanggal Mulai
+            </label>
+            <input
+              type="date"
+              id="start-date-permohonan"
+              value={startDatePermohonan}
+              onChange={(e) => setStartDatePermohonan(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="end-date-permohonan" className="block text-sm font-medium text-gray-700 mb-2">
+              Tanggal Akhir
+            </label>
+            <input
+              type="date"
+              id="end-date-permohonan"
+              value={endDatePermohonan}
+              onChange={(e) => setEndDatePermohonan(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
+          
+          <div>
+            <button
+              onClick={handleDownloadPermohonanByDateRange}
+              disabled={isDownloadingPermohonan || !startDatePermohonan || !endDatePermohonan}
+              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {isDownloadingPermohonan ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Downloading...
+                </span>
+              ) : (
+                'Download Lampiran'
+              )}
+            </button>
+          </div>
+        </div>
+        
+        <div className="mt-4 text-sm text-green-600">
+          <p>• Download semua lampiran permohonan dalam range tanggal yang dipilih</p>
+          <p>• Data diambil dari tanggal pengajuan</p>
+          <p>• Satu baris per detail limbah dengan informasi permohonan</p>
         </div>
       </div>
     </div>

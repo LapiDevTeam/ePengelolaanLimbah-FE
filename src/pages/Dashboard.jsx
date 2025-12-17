@@ -139,7 +139,10 @@ const Dashboard = ({ onNavigate }) => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* My Requests Card - Always visible */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <button
+          onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests' })}
+          className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
+        >
           <h3 className="text-lg font-semibold text-gray-900 mb-2">My Requests</h3>
           {isLoadingStats ? (
             <div className="flex items-center justify-center h-12">
@@ -151,11 +154,14 @@ const Dashboard = ({ onNavigate }) => {
           ) : (
             <p className="text-3xl font-bold text-green-600">{stats.myRequests}</p>
           )}
-        </div>
+        </button>
 
         {/* Pending Approvals Card - Only visible for users with approval authority */}
         {(user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role) || user?.log_NIK === "PJKPO") && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <button
+            onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals' })}
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Pending Approvals</h3>
             {isLoadingStats ? (
               <div className="flex items-center justify-center h-12">
@@ -167,12 +173,15 @@ const Dashboard = ({ onNavigate }) => {
             ) : (
               <p className="text-3xl font-bold text-yellow-600">{stats.pendingApprovals}</p>
             )}
-          </div>
+          </button>
         )}
 
         {/* Approved Card - Only visible for users with approval authority */}
         {(user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role) || user?.log_NIK === "PJKPO") && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <button
+            onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved' })}
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Approved</h3>
             {isLoadingStats ? (
               <div className="flex items-center justify-center h-12">
@@ -184,7 +193,7 @@ const Dashboard = ({ onNavigate }) => {
             ) : (
               <p className="text-3xl font-bold text-blue-600">{stats.approved}</p>
             )}
-          </div>
+          </button>
         )}
       </div>
 

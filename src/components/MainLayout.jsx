@@ -111,7 +111,7 @@ const MainLayout = () => {
       case "dashboard":
         return <Dashboard onNavigate={handleNavigate} />
       case "daftar-ajuan":
-        return <DaftarAjuan onNavigate={handleNavigate} />
+        return <DaftarAjuan onNavigate={handleNavigate} pageData={pageData} />
       case "detail-ajuan":
         // If no id supplied, redirect to daftar-ajuan to avoid mock fallback
         if (!pageData?.id) {

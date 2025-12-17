@@ -1,11 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DataTable from "../components/DataTable";
 import { useAuth } from "../contexts/AuthContext";
 import { showInfo } from "../utils/sweetAlert";
 
-const DaftarAjuan = ({ onNavigate }) => {
+const DaftarAjuan = ({ onNavigate, pageData }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("my-requests");
+  
+  // Map viewMode from Dashboard to activeTab
+  const getInitialTab = () => {
+    if (pageData?.viewMode) {
+      // Support both direct tab IDs and legacy viewMode names
+      const viewModeMap = {
+        'userOnly': 'my-requests',
+        'pendingApproval': 'pending-approvals',
+        'processedBy': 'approved',
+        'my-requests': 'my-requests',
+        'pending-approvals': 'pending-approvals',
+        'approved': 'approved'
+      };
+      return viewModeMap[pageData.viewMode] || 'my-requests';
+    }
+    return 'my-requests';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab());
+  
+  // Update activeTab when pageData.viewMode changes
+  useEffect(() => {
+    if (pageData?.viewMode) {
+      const viewModeMap = {
+        'userOnly': 'my-requests',
+        'pendingApproval': 'pending-approvals',
+        'processedBy': 'approved',
+        'my-requests': 'my-requests',
+        'pending-approvals': 'pending-approvals',
+        'approved': 'approved'
+      };
+      const newTab = viewModeMap[pageData.viewMode];
+      if (newTab) {
+        setActiveTab(newTab);
+      }
+    }
+  }, [pageData?.viewMode]);
   
   // All authenticated users are allowed to create a new permohonan
   const canCreateAjuan = !!user;

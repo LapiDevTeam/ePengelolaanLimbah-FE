@@ -53,7 +53,7 @@ const formatTimestamp = (timestamp) => {
 
 const BeritaAcaraDataTable = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedColumn, setSelectedColumn] = useState("");
+  const [selectedColumn, setSelectedColumn] = useState("tanggal");
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -166,7 +166,6 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
                 onChange={handleColumnChange}
                 className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
-                <option value="">- All Columns -</option>
                 {columnOptions.map((column) => (
                   <option key={column.value} value={column.value}>
                     {column.label}
@@ -181,10 +180,10 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
         </div>
 
         {/* Filter Status Display */}
-        {(searchTerm || selectedColumn) && (
+        {(searchTerm || (selectedColumn && selectedColumn !== 'tanggal')) && (
           <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
             <span>Filtering:</span>
-            {selectedColumn && (
+            {selectedColumn && selectedColumn !== 'tanggal' && (
               <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
                 Column: {columnOptions.find(col => col.value === selectedColumn)?.label}
               </span>
@@ -197,7 +196,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
             <button
               onClick={() => {
                 setSearchTerm("");
-                setSelectedColumn("");
+                setSelectedColumn("tanggal");
                 setCurrentPage(1);
               }}
               className="text-red-600 hover:text-red-800 text-xs underline"

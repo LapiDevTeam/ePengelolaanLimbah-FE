@@ -334,16 +334,31 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
             (step) => Number(step.step_level) === 3 || (step.step_name || "").toLowerCase() === "verification"
           );
           if (verificationStep && Array.isArray(verificationStep.VerificationRoles)) {
-            // Filter to role_id 1 (start) and role_id 4 (end)
-            const roleId1 = verificationStep.VerificationRoles.find((r) => r.id === 1 || r.role_id === 1);
-            const roleId4 = verificationStep.VerificationRoles.find((r) => r.id === 4 || r.role_id === 4);
-            
-            // Use approved_at as the timing for both roles
-            if (roleId1 && roleId1.approved_at) {
-              startTimes.push(roleId1.approved_at);
-            }
-            if (roleId4 && roleId4.approved_at) {
-              endTimes.push(roleId4.approved_at);
+            // Ambil semua roles id 1..4, pilih approved_at paling awal untuk start
+            // dan approved_at paling akhir untuk end (langkah tidak selalu mulai dari id 1)
+            const roleTimes = verificationStep.VerificationRoles
+              .filter((r) => [1, 2, 3, 4].includes(Number(r.id || r.role_id)))
+              .map((r) => r && r.approved_at)
+              .filter(Boolean);
+
+            if (roleTimes.length > 0) {
+              // Gunakan normalizer yang ada di bawah saat konversi ke millis
+              // Di sini cukup push raw timestamps; konversi terjadi setelahnya
+              // Start = earliest di permohonan ini, End = latest di permohonan ini
+              // Nanti di bawah akan diambil min(startTimes) dan max(endTimes) lintas permohonan
+              // dengan konversi ke millis melalui toMillis
+              // Untuk menjaga konsistensi, kita tentukan earliest/latest via Date langsung di sini juga
+              const toMsLocal = (v) => {
+                const norm = normalizeTs(v);
+                return norm ? new Date(norm).getTime() : null;
+              };
+              const msList = roleTimes.map(toMsLocal).filter((v) => v !== null && Number.isFinite(v));
+              if (msList.length > 0) {
+                const earliestMs = Math.min(...msList);
+                const latestMs = Math.max(...msList);
+                startTimes.push(new Date(earliestMs).toISOString());
+                endTimes.push(new Date(latestMs).toISOString());
+              }
             }
           }
         });

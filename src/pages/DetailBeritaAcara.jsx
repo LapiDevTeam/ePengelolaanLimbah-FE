@@ -20,6 +20,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
   const { user } = useAuth();
   const { getStatusStyle } = useConfigContext();
   const [data, setData] = useState(null);
+  const [verificationTimeRange, setVerificationTimeRange] = useState({ start: null, end: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [signingWorkflow, setSigningWorkflow] = useState([]);
@@ -27,6 +28,10 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
   const [beritaAcaraLoading, setBeritaAcaraLoading] = useState(false);
   const [excelLoadingStates, setExcelLoadingStates] = useState({});
   const [permohonanLoadingStates, setPermohonanLoadingStates] = useState({});
+
+  useEffect(() => {
+    console.log("verificationTimeRange", verificationTimeRange);
+  }, [verificationTimeRange]);
 
   // Fetch berita acara detail
   useEffect(() => {
@@ -284,6 +289,98 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
     fetchBeritaAcaraDetail();
   }, [beritaAcaraId, user]);
 
+  // Aggregate verification start/end times across all related permohonan using workflow API
+  useEffect(() => {
+    if (!data?.requests || data.requests.length === 0) {
+      setVerificationTimeRange({ start: null, end: null });
+      return;
+    }
+
+    let cancelled = false;
+
+    const normalizeTs = (val) => {
+      if (!val) return null;
+      const direct = new Date(val);
+      if (!Number.isNaN(direct.getTime())) return direct.toISOString();
+
+      // Fallback: handle malformed fractional seconds like 2025-12-02T07:07:49.07.200Z
+      const m = val.match(/^([0-9]{4}-[0-9]{2}-[0-9]{2})[T ]([0-9]{2}):([0-9]{2}):([0-9]{2})/);
+      if (m) {
+        return `${m[1]}T${m[2]}:${m[3]}:${m[4]}Z`;
+      }
+      return null;
+    };
+
+    const loadVerificationTimes = async () => {
+      try {
+        const workflowResults = await Promise.all(
+          data.requests.map(async (req) => {
+            try {
+              const res = await dataAPI.getApprovalWorkflows(req.request_id);
+              if (res?.data?.success) return res.data.data || [];
+            } catch (err) {
+              console.error("Failed to fetch approval workflows for request", req.request_id, err);
+            }
+            return null;
+          })
+        );
+
+        const startTimes = [];
+        const endTimes = [];
+
+        workflowResults.forEach((steps) => {
+          if (!steps) return;
+          const verificationStep = steps.find(
+            (step) => Number(step.step_level) === 3 || (step.step_name || "").toLowerCase() === "verification"
+          );
+          if (verificationStep && Array.isArray(verificationStep.VerificationRoles)) {
+            // Filter to role_id 1 (start) and role_id 4 (end)
+            const roleId1 = verificationStep.VerificationRoles.find((r) => r.id === 1 || r.role_id === 1);
+            const roleId4 = verificationStep.VerificationRoles.find((r) => r.id === 4 || r.role_id === 4);
+            
+            // Use approved_at as the timing for both roles
+            if (roleId1 && roleId1.approved_at) {
+              startTimes.push(roleId1.approved_at);
+            }
+            if (roleId4 && roleId4.approved_at) {
+              endTimes.push(roleId4.approved_at);
+            }
+          }
+        });
+
+        const toMillis = (val) => {
+          const norm = normalizeTs(val);
+          if (!norm) return null;
+          const ts = new Date(norm).getTime();
+          return Number.isFinite(ts) ? ts : null;
+        };
+
+        const startMillis = startTimes.map(toMillis).filter((v) => v !== null);
+        const endMillis = endTimes.map(toMillis).filter((v) => v !== null);
+
+        // Take earliest start time and latest end time from all permohonan
+        const minStart = startMillis.length ? Math.min(...startMillis) : null;
+        const maxEnd = endMillis.length ? Math.max(...endMillis) : null;
+
+        if (!cancelled) {
+          setVerificationTimeRange({
+            start: minStart !== null ? new Date(minStart).toISOString() : null,
+            end: maxEnd !== null ? new Date(maxEnd).toISOString() : null,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to aggregate verification times", err);
+        if (!cancelled) setVerificationTimeRange({ start: null, end: null });
+      }
+    };
+
+    loadVerificationTimes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data?.requests]);
+
   const handleBack = () => {
     if (onNavigate) {
       onNavigate("berita-acara");
@@ -530,6 +627,13 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
     );
   }
 
+  const verificationTimeText =
+    verificationTimeRange.start || verificationTimeRange.end
+      ? `${verificationTimeRange.start ? formatTimeID(verificationTimeRange.start) : ''}${
+          verificationTimeRange.start && verificationTimeRange.end ? ' - ' : ''
+        }${verificationTimeRange.end ? formatTimeID(verificationTimeRange.end) : ''}`.trim()
+      : data.detailBAP.jamWaktu;
+
   return (
     <div className="p-6">
       {/* Breadcrumb */}
@@ -622,7 +726,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Jam/Waktu</label>
-              <p className="text-gray-900">{data.detailBAP.jamWaktu}</p>
+              <p className="text-gray-900">{verificationTimeText}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Lokasi Verifikasi</label>

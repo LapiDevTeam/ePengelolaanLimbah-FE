@@ -129,6 +129,9 @@ const Dashboard = ({ onNavigate }) => {
     }
   }
 
+  // Get user's department - prefer delegatedTo if exists
+  const userDepartment = user?.delegatedTo?.emp_DeptID || user?.emp_DeptID;
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -257,64 +260,6 @@ const Dashboard = ({ onNavigate }) => {
         )}
       </div>
 
-      {/* Generate Logbook Section */}
-      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-blue-800 mb-4">Generate Logbook</h2>        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div>
-            <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
-              Tanggal Mulai
-            </label>
-            <input
-              type="date"
-              id="start-date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
-              Tanggal Akhir
-            </label>
-            <input
-              type="date"
-              id="end-date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          
-          <div>
-            <button
-              onClick={handleGenerateLogbook}
-              disabled={isGenerating || !startDate || !endDate}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {isGenerating ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Generating...
-                </span>
-              ) : (
-                'Generate Logbook'
-              )}
-            </button>
-          </div>
-        </div>
-        
-        <div className="mt-4 text-sm text-blue-600">
-          <p>• Logbook akan mengelompokkan data berdasarkan jenis limbah</p>
-          <p>• Setiap jenis limbah akan memiliki sheet terpisah</p>
-          <p>• Data diambil dari permohonan dengan status Completed</p>
-        </div>
-      </div>
-
       {/* Download Lampiran Permohonan Section */}
       <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
         <h2 className="text-xl font-semibold text-green-800 mb-4">Download Lampiran Permohonan</h2>        
@@ -370,8 +315,74 @@ const Dashboard = ({ onNavigate }) => {
           <p>• Download semua lampiran permohonan dalam range tanggal yang dipilih</p>
           <p>• Data diambil dari tanggal pengajuan</p>
           <p>• Satu baris per detail limbah dengan informasi permohonan</p>
+          {userDepartment === 'KL' ? (
+            <p className="font-semibold">• User KL: Dapat mendownload data dari semua bagian</p>
+          ) : (
+            <p className="font-semibold">• User {userDepartment || 'Non-KL'}: Hanya dapat mendownload data dari bagian sendiri ({userDepartment})</p>
+          )}
         </div>
       </div>
+
+      {/* Generate Logbook Section - Only visible for KL users */}
+      {userDepartment === 'KL' && (
+        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h2 className="text-xl font-semibold text-blue-800 mb-4">Generate Logbook</h2>        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
+            <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
+              Tanggal Mulai
+            </label>
+            <input
+              type="date"
+              id="start-date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
+              Tanggal Akhir
+            </label>
+            <input
+              type="date"
+              id="end-date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          
+          <div>
+            <button
+              onClick={handleGenerateLogbook}
+              disabled={isGenerating || !startDate || !endDate}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {isGenerating ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                </span>
+              ) : (
+                'Generate Logbook'
+              )}
+            </button>
+          </div>
+        </div>
+        
+        <div className="mt-4 text-sm text-blue-600">
+          <p>• Logbook akan mengelompokkan data berdasarkan jenis limbah</p>
+          <p>• Setiap jenis limbah akan memiliki sheet terpisah</p>
+          <p>• Data diambil dari permohonan dengan status Completed</p>
+          <p className="font-semibold">• Fitur ini hanya tersedia untuk user KL</p>
+        </div>
+      </div>
+      )}
     </div>
   )
 }

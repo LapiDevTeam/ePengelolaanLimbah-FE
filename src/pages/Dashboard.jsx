@@ -130,7 +130,7 @@ const Dashboard = ({ onNavigate }) => {
   }
 
   // Get user's department - prefer delegatedTo if exists
-  const userDepartment = user?.delegatedTo?.emp_DeptID || user?.emp_DeptID;
+  const userDepartment = user?.emp_DeptID;
 
   return (
     <div className="p-6">

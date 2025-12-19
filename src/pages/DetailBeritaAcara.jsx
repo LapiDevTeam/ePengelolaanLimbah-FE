@@ -30,7 +30,6 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
   const [permohonanLoadingStates, setPermohonanLoadingStates] = useState({});
 
   useEffect(() => {
-    console.log("verificationTimeRange", verificationTimeRange);
   }, [verificationTimeRange]);
 
   // Fetch berita acara detail

@@ -344,7 +344,6 @@ const FormBeritaAcara = ({ onNavigate }) => {
         selectedRequestIds: selectedRequestIds
       };
       
-      console.log('Berita Acara data to submit:', beritaAcaraData);
       
       const response = await dataAPI.createBeritaAcara(beritaAcaraData);
       

@@ -602,18 +602,23 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     const wadahNumber = specificLabel?.nomor_wadah || labelIndex;
     
     if (selectedFormat === 'pdf') {
-      // Create PDF from canvas
+      // Create PDF with proper physical dimensions for printing
+      // Assuming 300 DPI for high-quality printing
+      const dpi = 300;
+      const widthMm = (sizeOption.width / dpi) * 25.4;
+      const heightMm = (sizeOption.height / dpi) * 25.4;
+      
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: [sizeOption.width / 3.78, sizeOption.height / 3.78] // Convert pixels to mm (72 DPI)
+        format: [widthMm, heightMm]
       });
       
       // Convert canvas to image data URL
       const imgData = canvas.toDataURL('image/png', 1.0);
       
-      // Add image to PDF
-      pdf.addImage(imgData, 'PNG', 0, 0, sizeOption.width / 3.78, sizeOption.height / 3.78);
+      // Add image to PDF at full size
+      pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
       
       // Download PDF
       pdf.save(`label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-wadah-${wadahNumber}-${sizeOption.width}x${sizeOption.height}.pdf`);
@@ -752,7 +757,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
                   </button>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  * PDF direkomendasikan untuk hasil printing yang lebih akurat
+                  * PDF menggunakan 300 DPI untuk hasil printing yang akurat dan berkualitas tinggi
                 </p>
               </div>
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { dataAPI } from "../services/api";
 import { toJakartaIsoFromLocal, formatDateID } from "../utils/time";
+import jsPDF from 'jspdf';
 
 // Preview component using the same drawing logic
 const PreviewCanvas = ({ drawLabel, currentContainerIndex }) => {
@@ -39,6 +40,7 @@ const PreviewCanvas = ({ drawLabel, currentContainerIndex }) => {
 
 const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false }) => {
   const [selectedSize, setSelectedSize] = useState("800px");
+  const [selectedFormat, setSelectedFormat] = useState("png");
   const [currentContainerIndex, setCurrentContainerIndex] = useState(1);
   const [labelData, setLabelData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -599,17 +601,35 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     const specificLabel = labelData.labels[labelIndex - 1];
     const wadahNumber = specificLabel?.nomor_wadah || labelIndex;
     
-    // Convert to blob and download with high quality
-    canvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-wadah-${wadahNumber}-${sizeOption.width}x${sizeOption.height}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 'image/png', 1.0); // Maximum quality
+    if (selectedFormat === 'pdf') {
+      // Create PDF from canvas
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [sizeOption.width / 3.78, sizeOption.height / 3.78] // Convert pixels to mm (72 DPI)
+      });
+      
+      // Convert canvas to image data URL
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      
+      // Add image to PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, sizeOption.width / 3.78, sizeOption.height / 3.78);
+      
+      // Download PDF
+      pdf.save(`label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-wadah-${wadahNumber}-${sizeOption.width}x${sizeOption.height}.pdf`);
+    } else {
+      // Convert to blob and download as PNG
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-wadah-${wadahNumber}-${sizeOption.width}x${sizeOption.height}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 'image/png', 1.0); // Maximum quality
+    }
   };
 
   const handleDownloadAll = async () => {
@@ -701,6 +721,38 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
                   * File akan didownload dalam format PNG dengan kualitas tinggi
+                </p>
+              </div>
+
+              {/* Format Selection */}
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Pilih Format Download:</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setSelectedFormat('png')}
+                    className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors border ${
+                      selectedFormat === 'png'
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div>PNG</div>
+                    <div className="text-xs opacity-75">Untuk digital</div>
+                  </button>
+                  <button
+                    onClick={() => setSelectedFormat('pdf')}
+                    className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors border ${
+                      selectedFormat === 'pdf'
+                        ? 'bg-red-600 text-white border-red-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div>PDF</div>
+                    <div className="text-xs opacity-75">Untuk printing</div>
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  * PDF direkomendasikan untuk hasil printing yang lebih akurat
                 </p>
               </div>
 

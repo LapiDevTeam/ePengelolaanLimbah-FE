@@ -602,23 +602,29 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     const wadahNumber = specificLabel?.nomor_wadah || labelIndex;
     
     if (selectedFormat === 'pdf') {
-      // Create PDF with proper physical dimensions for printing
-      // Assuming 300 DPI for high-quality printing
-      const dpi = 300;
-      const widthMm = (sizeOption.width / dpi) * 25.4;
-      const heightMm = (sizeOption.height / dpi) * 25.4;
+      // Create A4 PDF with label positioned in top-left corner, scaled for better printing
+      const scaleFactor = 3; // Scale factor to make labels larger and easier to print
       
+      // Calculate scaled dimensions
+      const dpi = 300;
+      const originalWidthMm = (sizeOption.width / dpi) * 25.4;
+      const originalHeightMm = (sizeOption.height / dpi) * 25.4;
+      const scaledWidthMm = originalWidthMm * scaleFactor;
+      const scaledHeightMm = originalHeightMm * scaleFactor;
+      
+      // A4 landscape dimensions: 297mm x 210mm
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: [widthMm, heightMm]
+        format: 'a4'
       });
       
       // Convert canvas to image data URL
       const imgData = canvas.toDataURL('image/png', 1.0);
       
-      // Add image to PDF at full size
-      pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
+      // Position label in top-left corner with some margin
+      const margin = 10; // 10mm margin
+      pdf.addImage(imgData, 'PNG', margin, margin, scaledWidthMm, scaledHeightMm);
       
       // Download PDF
       pdf.save(`label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-wadah-${wadahNumber}-${sizeOption.width}x${sizeOption.height}.pdf`);
@@ -757,7 +763,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
                   </button>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  * PDF menggunakan 300 DPI untuk hasil printing yang akurat dan berkualitas tinggi
+                  * PDF akan di-scale 3x dan ditempatkan di pojok kiri atas kertas A4 landscape untuk kemudahan printing
                 </p>
               </div>
 

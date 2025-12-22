@@ -260,18 +260,12 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
   // Physical size mapping (pixel → cm) - PRESISI untuk printing
   const PHYSICAL_SIZE_MAPPING = {
     "400px": { widthCm: 10, heightCm: 6 },
-    "600px": { widthCm: 15, heightCm: 9 },
-    "800px": { widthCm: 20, heightCm: 12 },
-    "1000px": { widthCm: 25, heightCm: 15 },
-    "1200px": { widthCm: 30, heightCm: 18 }
+    "800px": { widthCm: 20, heightCm: 12 }
   };
 
   const sizeOptions = [
     { value: "400px", label: "10×6 cm", width: 400, height: 240, ...PHYSICAL_SIZE_MAPPING["400px"] },
-    { value: "600px", label: "15×9 cm", width: 600, height: 360, ...PHYSICAL_SIZE_MAPPING["600px"] },
-    { value: "800px", label: "20×12 cm", width: 800, height: 480, ...PHYSICAL_SIZE_MAPPING["800px"] },
-    { value: "1000px", label: "25×15 cm", width: 1000, height: 600, ...PHYSICAL_SIZE_MAPPING["1000px"] },
-    { value: "1200px", label: "30×18 cm", width: 1200, height: 720, ...PHYSICAL_SIZE_MAPPING["1200px"] }
+    { value: "800px", label: "20×12 cm", width: 800, height: 480, ...PHYSICAL_SIZE_MAPPING["800px"] }
   ];
 
   // Helper function to determine waste symbols based on waste properties
@@ -719,7 +713,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
               {/* Size Selection */}
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Pilih Ukuran Download:</h3>
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {sizeOptions.map((option) => (
                     <button
                       key={option.value}

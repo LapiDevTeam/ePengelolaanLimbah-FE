@@ -257,12 +257,21 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
 
   const totalLabels = labelData.total_labels || 0;
 
+  // Physical size mapping (pixel → cm) - PRESISI untuk printing
+  const PHYSICAL_SIZE_MAPPING = {
+    "400px": { widthCm: 10, heightCm: 6 },
+    "600px": { widthCm: 15, heightCm: 9 },
+    "800px": { widthCm: 20, heightCm: 12 },
+    "1000px": { widthCm: 25, heightCm: 15 },
+    "1200px": { widthCm: 30, heightCm: 18 }
+  };
+
   const sizeOptions = [
-    { value: "400px", label: "400px", width: 400, height: 240 },
-    { value: "600px", label: "600px", width: 600, height: 360 },
-    { value: "800px", label: "800px", width: 800, height: 480 },
-    { value: "1000px", label: "1000px", width: 1000, height: 600 },
-    { value: "1200px", label: "1200px", width: 1200, height: 720 }
+    { value: "400px", label: "10×6 cm", width: 400, height: 240, ...PHYSICAL_SIZE_MAPPING["400px"] },
+    { value: "600px", label: "15×9 cm", width: 600, height: 360, ...PHYSICAL_SIZE_MAPPING["600px"] },
+    { value: "800px", label: "20×12 cm", width: 800, height: 480, ...PHYSICAL_SIZE_MAPPING["800px"] },
+    { value: "1000px", label: "25×15 cm", width: 1000, height: 600, ...PHYSICAL_SIZE_MAPPING["1000px"] },
+    { value: "1200px", label: "30×18 cm", width: 1200, height: 720, ...PHYSICAL_SIZE_MAPPING["1200px"] }
   ];
 
   // Helper function to determine waste symbols based on waste properties
@@ -580,19 +589,23 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Use high resolution for better quality download
-    const pixelRatio = window.devicePixelRatio || 1;
-    const highResMultiplier = 2; // Additional multiplier for even better quality
+    // DPI untuk printing berkualitas tinggi
+    const DPI = 300;
     
-    // Set canvas size with high resolution
-    canvas.width = sizeOption.width * pixelRatio * highResMultiplier;
-    canvas.height = sizeOption.height * pixelRatio * highResMultiplier;
+    // Konversi cm ke pixel untuk canvas (berdasarkan DPI)
+    const widthPx = Math.round((sizeOption.widthCm / 2.54) * DPI);
+    const heightPx = Math.round((sizeOption.heightCm / 2.54) * DPI);
     
-    // Scale context for high resolution
-    ctx.scale(pixelRatio * highResMultiplier, pixelRatio * highResMultiplier);
+    // Konversi cm ke mm untuk PDF
+    const widthMm = sizeOption.widthCm * 10;
+    const heightMm = sizeOption.heightCm * 10;
     
-    // Calculate scale based on original size
-    const scale = sizeOption.width / 800;
+    // Set canvas size berdasarkan ukuran fisik (cm → pixel)
+    canvas.width = widthPx;
+    canvas.height = heightPx;
+    
+    // Calculate scale: canvas width dibagi dengan desain dasar 800px
+    const scale = widthPx / 800;
     
     // Draw the label
     await drawLabel(canvas, ctx, scale, labelIndex);
@@ -600,41 +613,33 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     // Get the specific label data for filename
     const specificLabel = labelData.labels[labelIndex - 1];
     const wadahNumber = specificLabel?.nomor_wadah || labelIndex;
+    const baseFilename = `label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-wadah-${wadahNumber}-${sizeOption.widthCm}x${sizeOption.heightCm}cm`;
     
     if (selectedFormat === 'pdf') {
-      // Create A4 PDF with label positioned in top-left corner, scaled for better printing
-      const scaleFactor = 3; // Scale factor to make labels larger and easier to print
+      // Buat PDF dengan ukuran EXACT sesuai label (landscape jika width > height)
+      const orientation = widthMm > heightMm ? 'landscape' : 'portrait';
       
-      // Calculate scaled dimensions
-      const dpi = 300;
-      const originalWidthMm = (sizeOption.width / dpi) * 25.4;
-      const originalHeightMm = (sizeOption.height / dpi) * 25.4;
-      const scaledWidthMm = originalWidthMm * scaleFactor;
-      const scaledHeightMm = originalHeightMm * scaleFactor;
-      
-      // A4 landscape dimensions: 297mm x 210mm
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: orientation,
         unit: 'mm',
-        format: 'a4'
+        format: [widthMm, heightMm] // Custom size - EXACT label size
       });
       
       // Convert canvas to image data URL
       const imgData = canvas.toDataURL('image/png', 1.0);
       
-      // Position label in top-left corner with some margin
-      const margin = 10; // 10mm margin
-      pdf.addImage(imgData, 'PNG', margin, margin, scaledWidthMm, scaledHeightMm);
+      // Add image to PDF - FULL SIZE, no margin
+      pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm);
       
       // Download PDF
-      pdf.save(`label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-wadah-${wadahNumber}-${sizeOption.width}x${sizeOption.height}.pdf`);
+      pdf.save(`${baseFilename}.pdf`);
     } else {
       // Convert to blob and download as PNG
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-wadah-${wadahNumber}-${sizeOption.width}x${sizeOption.height}.png`;
+        a.download = `${baseFilename}.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -726,7 +731,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
                       }`}
                     >
                       <div>{option.label}</div>
-                      <div className="text-xs opacity-75">{option.width} x {option.height}</div>
+                      <div className="text-xs opacity-75">{option.width}×{option.height}px</div>
                     </button>
                   ))}
                 </div>
@@ -763,7 +768,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
                   </button>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  * PDF akan di-scale 3x dan ditempatkan di pojok kiri atas kertas A4 landscape untuk kemudahan printing
+                  * PDF menggunakan ukuran EXACT label (bukan A4). Print dengan mode "Actual Size" untuk hasil presisi.
                 </p>
               </div>
 

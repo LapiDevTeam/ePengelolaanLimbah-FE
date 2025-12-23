@@ -568,12 +568,12 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
       }
     });
     
-    // Nomor wadah (aligned with SIFAT LIMBAH) - same font size as content
+    // Nomor wadah (aligned with JUMLAH LIMBAH) - same font size as content
     const nomorText = `NOMOR : ${wadahNumber}/${totalLabels}`;
     ctx.font = `bold ${18 * s}px Arial`;
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'right';
-    ctx.fillText(nomorText, (width - 35) * s, 450 * s);
+    ctx.fillText(nomorText, (width - 35) * s, 420 * s);
   };
 
   const handleDownload = async (labelIndex) => {

@@ -643,9 +643,74 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
   };
 
   const handleDownloadAll = async () => {
-    for (let i = 1; i <= totalLabels; i++) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      await handleDownload(i);
+    if (selectedFormat === 'pdf') {
+      const sizeOption = sizeOptions.find(opt => opt.value === selectedSize);
+      if (!sizeOption) return;
+
+      const MARGIN_MM = 10;
+      const GAP_MM = 4;
+      const DPI = 300;
+      const A4_WIDTH_MM = 210;
+      const A4_HEIGHT_MM = 297;
+
+      const labelWidthCm = sizeOption.widthCm;
+      const labelHeightCm = sizeOption.heightCm;
+      const labelWidthMm = labelWidthCm * 10;
+      const labelHeightMm = labelHeightCm * 10;
+      const labelWidthPx = Math.round((labelWidthCm / 2.54) * DPI);
+      const labelHeightPx = Math.round((labelHeightCm / 2.54) * DPI);
+
+      const portraitCols = Math.floor((A4_WIDTH_MM - 2 * MARGIN_MM + GAP_MM) / (labelWidthMm + GAP_MM));
+      const portraitRows = Math.floor((A4_HEIGHT_MM - 2 * MARGIN_MM + GAP_MM) / (labelHeightMm + GAP_MM));
+      const portraitLabelsPerPage = portraitCols * portraitRows;
+
+      const landscapeCols = Math.floor((A4_HEIGHT_MM - 2 * MARGIN_MM + GAP_MM) / (labelWidthMm + GAP_MM));
+      const landscapeRows = Math.floor((A4_WIDTH_MM - 2 * MARGIN_MM + GAP_MM) / (labelHeightMm + GAP_MM));
+      const landscapeLabelsPerPage = landscapeCols * landscapeRows;
+
+      const usePortrait = portraitLabelsPerPage >= landscapeLabelsPerPage;
+      const orientation = usePortrait ? 'portrait' : 'landscape';
+      const cols = usePortrait ? portraitCols : landscapeCols;
+      const rows = usePortrait ? portraitRows : landscapeRows;
+      const labelsPerPage = cols * rows;
+
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      for (let i = 0; i < totalLabels; i++) {
+        if (i > 0 && i % labelsPerPage === 0) {
+          pdf.addPage();
+        }
+
+        const posInPage = i % labelsPerPage;
+        const col = posInPage % cols;
+        const row = Math.floor(posInPage / cols);
+
+        const x = MARGIN_MM + col * (labelWidthMm + GAP_MM);
+        const y = MARGIN_MM + row * (labelHeightMm + GAP_MM);
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = labelWidthPx;
+        canvas.height = labelHeightPx;
+
+        const scale = labelWidthPx / 800;
+        await drawLabel(canvas, ctx, scale, i + 1);
+
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        pdf.addImage(imgData, 'PNG', x, y, labelWidthMm, labelHeightMm);
+      }
+
+      const specificLabel = labelData.labels[0];
+      pdf.save(`label-limbah-${specificLabel?.nomor_permohonan || 'unknown'}-all-${totalLabels}labels-A4.pdf`);
+    } else {
+      for (let i = 1; i <= totalLabels; i++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await handleDownload(i);
+      }
     }
   };
 

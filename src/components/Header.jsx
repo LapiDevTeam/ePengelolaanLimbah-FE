@@ -30,7 +30,7 @@ const Header = () => {
       <div className="px-6">
         {/* System title positioned on the very left */}
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">e-System Limbah B3</h1>
+          <h1 className="text-2xl font-bold">ePengelolaan Limbah</h1>
           
           {/* Right side - User greeting and datetime (only show if user is logged in) */}
           {user && (

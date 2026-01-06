@@ -133,6 +133,14 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             searchTerm: searchTerm,
             selectedColumn: selectedColumn
           });
+        } else if (viewMode === "rejected") {
+          // Fetch rejected requests (only for HSE Manager)
+          response = await dataAPI.getRejectedRequests({
+            page: currentPage,
+            limit: itemsPerPage,
+            searchTerm: searchTerm,
+            selectedColumn: selectedColumn
+          });
         } else {
           // Fetch user's own requests (default behavior)
           response = await dataAPI.getDestructionRequests({

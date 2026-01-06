@@ -51,6 +51,9 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   const hasApprovalAuthority = (user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role)) || 
                                (user?.log_NIK === "PJKPO");
 
+  // Check if user is HSE Manager (based on Jabatan field)
+  const isHSEManager = user?.Jabatan === "Health,Safety & Environment Manager";
+
   const handleAddApplication = () => {
     // Navigate to form page when implemented
     if (onNavigate) {
@@ -80,6 +83,14 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
     });
   }
 
+  // Add rejected tab only for HSE Manager
+  if (isHSEManager) {
+    tabs.push({
+      id: "rejected",
+      label: "Rejected",
+    });
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -95,6 +106,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
               {activeTab === "my-requests" && "Daftar ajuan pemusnahan yang telah Anda buat."}
               {activeTab === "pending-approvals" && "Daftar ajuan pemusnahan yang menunggu persetujuan Anda."}
               {activeTab === "approved" && "Daftar ajuan pemusnahan yang telah Anda setujui."}
+              {activeTab === "rejected" && "Daftar ajuan pemusnahan yang ditolak."}
             </p>
           </div>
           {(canCreateAjuan || (user?.delegatedTo && hasApprovalAuthority)) && activeTab === "my-requests" && (
@@ -109,8 +121,8 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
         </div>
       </div>
 
-      {/* Tab Navigation - only show if user has approval authority */}
-      {hasApprovalAuthority && (
+      {/* Tab Navigation - only show if user has approval authority or is HSE Manager */}
+      {(hasApprovalAuthority || isHSEManager) && (
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">

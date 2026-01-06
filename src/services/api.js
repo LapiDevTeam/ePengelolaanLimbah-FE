@@ -1657,6 +1657,49 @@ export const dataAPI = {
     }
   },
 
+  // Fetch rejected requests (for HSE Manager)
+  getRejectedRequests: async (params = {}) => {
+    try {
+      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '' } = params;
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        status: 'Rejected'
+      });
+
+      if (searchTerm) queryParams.append('search', searchTerm);
+      if (selectedColumn) queryParams.append('column', selectedColumn);
+
+      const response = await api.get(`/permohonan?${queryParams}`);
+      if (response.data.success) {
+        return {
+          data: {
+            success: true,
+            data: response.data.data.map(item => ({
+              id: item.request_id,
+              tanggal: item.created_at,
+              noPermohonan: item.nomor_permohonan || `DRAFT-${item.request_id}`,
+              golongan_limbah_id: item.golongan_limbah_id,
+              jenis_limbah_b3_id: item.jenis_limbah_b3_id,
+              status: item.status || 'Draft',
+              currentStepLevel: item.CurrentStep?.step_level || null,
+              requesterName: item.requester_name,
+              bagian: item.bagian,
+              bentukLimbah: item.bentuk_limbah,
+              alasanPenolakan: item.alasan_penolakan
+            })),
+            pagination: response.data.pagination
+          }
+        };
+      } else {
+        return { data: { success: false, message: response.data.message || 'Failed to fetch rejected requests', data: [], pagination: { total: 0, page: 1, limit: 8, totalPages: 0 } } };
+      }
+    } catch (error) {
+      console.error('Error fetching rejected requests:', error);
+      return { data: { success: false, message: error.response?.data?.message || 'Failed to fetch rejected requests', data: [], pagination: { total: 0, page: 1, limit: 8, totalPages: 0 } } };
+    }
+  },
+
   // Get dashboard statistics
   getDashboardStats: async () => {
     try {

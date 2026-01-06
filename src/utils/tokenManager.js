@@ -48,6 +48,15 @@ export const TokenManager = {
     TokenManager.clearUser();
     sessionStorage.removeItem('delegatedTo');
     localStorage.removeItem('delegatedTo');
+  },
+
+  // Add token to URL as query parameter (untuk window.open yang tidak bisa send header)
+  addTokenToUrl: (url) => {
+    const token = TokenManager.getToken();
+    if (!token) return url;
+    
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}token=${encodeURIComponent(token)}`;
   }
 };
 

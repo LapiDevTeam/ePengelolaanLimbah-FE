@@ -1,8 +1,7 @@
 import PropTypes from "prop-types";
 import { useMemo, useEffect, useState } from "react";
 import { dataAPI } from "../services/api";
-import { getBaseUrl } from "../utils/urlHelper";
-
+import { getBaseUrl } from "../utils/urlHelper";import { TokenManager } from '../utils/tokenManager';
 export default function FormBeritaAcaraContent({ 
   beritaAcaraId = null, 
   data: initialData = null, 
@@ -106,7 +105,7 @@ export default function FormBeritaAcaraContent({
     // Build the backend print endpoint URL with encoded params
     const printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(link)}&beritaAcaraId=${encodeURIComponent(beritaAcaraId)}&createdAt=${encodeURIComponent(createdAt)}`;
 
-    return { link, printUrl };
+    return { link, printUrl: TokenManager.addTokenToUrl(printUrl) };
   }, [beritaAcaraId, data]);
 
   // Only show content if we have data

@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { useMemo, useEffect, useState } from "react";
 import { dataAPI } from "../services/api";
 import { getBaseUrl } from "../utils/urlHelper";
+import { TokenManager } from "../utils/tokenManager";
 
 export default function FormPermohonanContent({ requestId = null, data: initialData = null, useMockData = false }) {
   const [data, setData] = useState(initialData);
@@ -164,7 +165,7 @@ export default function FormPermohonanContent({ requestId = null, data: initialD
       tipe2
     )}&kode=${encodeURIComponent(kode || '')}&createdAt=${encodeURIComponent(createdAt)}`;
 
-    return { link, printUrl };
+    return { link, printUrl: TokenManager.addTokenToUrl(printUrl) };
   }, [requestId, data?.tanggal_pengajuan, tipe2, kode]);
 
   // Only show content if we have data

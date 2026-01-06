@@ -2,7 +2,6 @@ import PropTypes from "prop-types";
 import { useMemo, useEffect, useState } from "react";
 import { dataAPI } from "../services/api";
 import { getBaseUrl } from "../utils/urlHelper";
-import { TokenManager } from "../utils/tokenManager";
 
 export default function FormBeritaAcaraContent({ 
   beritaAcaraId = null, 
@@ -105,10 +104,7 @@ export default function FormBeritaAcaraContent({
     const createdAt = new Date().toISOString(); // Use current date as creation timestamp
 
     // Build the backend print endpoint URL with encoded params
-    let printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(link)}&beritaAcaraId=${encodeURIComponent(beritaAcaraId)}&createdAt=${encodeURIComponent(createdAt)}`;
-    
-    // Add token to print URL for direct browser access
-    printUrl = TokenManager.addTokenToPrintUrl(printUrl);
+    const printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(link)}&beritaAcaraId=${encodeURIComponent(beritaAcaraId)}&createdAt=${encodeURIComponent(createdAt)}`;
 
     return { link, printUrl };
   }, [beritaAcaraId, data]);

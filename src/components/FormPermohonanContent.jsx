@@ -2,7 +2,6 @@ import PropTypes from "prop-types";
 import { useMemo, useEffect, useState } from "react";
 import { dataAPI } from "../services/api";
 import { getBaseUrl } from "../utils/urlHelper";
-import { TokenManager } from "../utils/tokenManager";
 
 export default function FormPermohonanContent({ requestId = null, data: initialData = null, useMockData = false }) {
   const [data, setData] = useState(initialData);
@@ -161,12 +160,9 @@ export default function FormPermohonanContent({ requestId = null, data: initialD
     const createdAt = data?.tanggal_pengajuan || new Date().toISOString();
 
     // Build the backend print endpoint URL with encoded params
-    let printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(link)}&type=${encodeURIComponent(
+    const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(link)}&type=${encodeURIComponent(
       tipe2
     )}&kode=${encodeURIComponent(kode || '')}&createdAt=${encodeURIComponent(createdAt)}`;
-    
-    // Add token to print URL for direct browser access
-    printUrl = TokenManager.addTokenToPrintUrl(printUrl);
 
     return { link, printUrl };
   }, [requestId, data?.tanggal_pengajuan, tipe2, kode]);

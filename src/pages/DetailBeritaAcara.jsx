@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { dataAPI } from "../services/api";
 import { formatDateTimeID, formatDateID, formatTimeID } from "../utils/time";
 import { getBaseUrl } from "../utils/urlHelper";
-import { TokenManager } from "../utils/tokenManager";
 import { useAuth } from "../contexts/AuthContext";
 import { useConfigContext } from "../contexts/ConfigContext";
 import {
@@ -468,22 +467,20 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
           console.log("PDF generated successfully");
         } else {
           console.warn("Print request failed:", printRes?.data?.message);
-          // Fallback to direct URL with token
+          // Fallback to direct URL
           const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/$/, "");
-          let printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(
+          const printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(
             link
           )}&beritaAcaraId=${encodeURIComponent(beritaAcaraId)}&createdAt=${encodeURIComponent(createdAt)}`;
-          printUrl = TokenManager.addTokenToPrintUrl(printUrl);
           window.open(printUrl, "_blank");
         }
       } catch (printErr) {
         console.warn("Print API call failed:", printErr.message);
-        // Fallback to direct URL with token
+        // Fallback to direct URL
         const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/$/, "");
-        let printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(
+        const printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(
           link
         )}&beritaAcaraId=${encodeURIComponent(beritaAcaraId)}&createdAt=${encodeURIComponent(createdAt)}`;
-        printUrl = TokenManager.addTokenToPrintUrl(printUrl);
         window.open(printUrl, "_blank");
       }
     } catch (err) {
@@ -567,22 +564,20 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
           console.log("PDF generated successfully");
         } else {
           console.warn("Print request failed:", printRes?.data?.message);
-          // Fallback to direct URL with token
+          // Fallback to direct URL
           const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/$/, "");
-          let printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(
+          const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(
             link
           )}&createdAt=${encodeURIComponent(createdAt)}`;
-          printUrl = TokenManager.addTokenToPrintUrl(printUrl);
           window.open(printUrl, "_blank");
         }
       } catch (printErr) {
         console.warn("Print API call failed:", printErr.message);
-        // Fallback to direct URL with token
+        // Fallback to direct URL
         const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/$/, "");
-        let printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(
+        const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(
           link
         )}&createdAt=${encodeURIComponent(createdAt)}`;
-        printUrl = TokenManager.addTokenToPrintUrl(printUrl);
         window.open(printUrl, "_blank");
       }
     } catch (err) {

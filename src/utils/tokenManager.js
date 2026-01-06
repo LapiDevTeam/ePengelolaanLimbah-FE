@@ -29,19 +29,6 @@ export const TokenManager = {
     return userData ? JSON.parse(userData) : null;
   },
 
-  // Add token to print URL as query parameter
-  addTokenToPrintUrl: (url) => {
-    const token = TokenManager.getToken();
-    if (!token) {
-      console.warn('No token found for print URL');
-      return url;
-    }
-    
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}token=${encodeURIComponent(token)}`;
-  },
-
-
   // Set user data ke session dan localStorage
   setUser: (userData) => {
     const userString = JSON.stringify(userData);

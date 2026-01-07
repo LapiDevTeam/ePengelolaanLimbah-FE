@@ -219,7 +219,7 @@ export default function FormBeritaAcaraContent({
                   padding: '4px 8px',
                   width: '10%'
                 }}>
-                  {formatTime(data.jam_waktu) || ''}
+                  {data.jam_waktu || ''}
                 </td>
                 <td style={{ 
                   border: '1px solid black', 

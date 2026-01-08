@@ -141,6 +141,14 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             searchTerm: searchTerm,
             selectedColumn: selectedColumn
           });
+        } else if (viewMode === "verifikasi") {
+          // Fetch verification requests (for HSE/KL team)
+          response = await dataAPI.getVerificationRequests({
+            page: currentPage,
+            limit: itemsPerPage,
+            searchTerm: searchTerm,
+            selectedColumn: selectedColumn
+          });
         } else {
           // Fetch user's own requests (default behavior)
           response = await dataAPI.getDestructionRequests({

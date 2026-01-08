@@ -54,6 +54,10 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   // Check if user is HSE Manager (based on Jabatan field)
   const isHSEManager = user?.Jabatan === "Health,Safety & Environment Manager";
 
+  // Check if user is from KL department (HSE/KL team) based solely on department ID
+  const isFromKL = user?.emp_DeptID && String(user.emp_DeptID).toUpperCase() === "KL";
+  console.log("🚀 ~ DaftarAjuan ~ isFromKL:", isFromKL, "emp_DeptID:", user?.emp_DeptID);
+
   const handleAddApplication = () => {
     // Navigate to form page when implemented
     if (onNavigate) {
@@ -83,6 +87,14 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
     });
   }
 
+  // Add verifikasi tab for HSE/KL team members
+  if (isFromKL) {
+    tabs.push({
+      id: "verifikasi",
+      label: "Verifikasi",
+    });
+  }
+
   // Add rejected tab only for HSE Manager
   if (isHSEManager) {
     tabs.push({
@@ -106,6 +118,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
               {activeTab === "my-requests" && "Daftar ajuan pemusnahan yang telah Anda buat."}
               {activeTab === "pending-approvals" && "Daftar ajuan pemusnahan yang menunggu persetujuan Anda."}
               {activeTab === "approved" && "Daftar ajuan pemusnahan yang telah Anda setujui."}
+              {activeTab === "verifikasi" && "Daftar ajuan pemusnahan yang menunggu verifikasi lapangan."}
               {activeTab === "rejected" && "Daftar ajuan pemusnahan yang ditolak."}
             </p>
           </div>
@@ -121,8 +134,8 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
         </div>
       </div>
 
-      {/* Tab Navigation - only show if user has approval authority or is HSE Manager */}
-      {(hasApprovalAuthority || isHSEManager) && (
+      {/* Tab Navigation - show if user has approval authority, is HSE Manager, or from KL (HSE/KL team) */}
+      {(hasApprovalAuthority || isHSEManager || isFromKL) && (
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">

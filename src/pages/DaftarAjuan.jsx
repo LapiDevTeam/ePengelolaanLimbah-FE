@@ -25,9 +25,9 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   };
   
   const [activeTab, setActiveTab] = useState(getInitialTab());
-  
-  // State for status filter (passed from Dashboard)
-  const [statusFilter, setStatusFilter] = useState(pageData?.statusFilter || '');
+
+  // State for status filter (passed from Dashboard). Use `null` when no filter
+  const [statusFilter, setStatusFilter] = useState(pageData?.statusFilter || null);
 
   // Update activeTab and statusFilter when pageData changes
   useEffect(() => {
@@ -46,13 +46,21 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
         setActiveTab(newTab);
       }
     }
-    // Update status filter if provided
+    // Update status filter if provided (keep `null` when none)
     if (pageData?.statusFilter) {
       setStatusFilter(pageData.statusFilter);
     } else {
-      setStatusFilter('');
+      setStatusFilter(null);
     }
   }, [pageData?.viewMode, pageData?.statusFilter]);
+
+  // Clear the `statusFilter` when the user switches away from the
+  // `all-permohonan` tab so the filter does not persist across tabs.
+  useEffect(() => {
+    if (activeTab !== 'all-permohonan' && statusFilter !== null) {
+      setStatusFilter(null);
+    }
+  }, [activeTab]);
   
   // All authenticated users are allowed to create a new permohonan
   const canCreateAjuan = !!user;

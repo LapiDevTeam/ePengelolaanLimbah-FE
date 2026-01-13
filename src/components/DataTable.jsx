@@ -220,6 +220,65 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
 
   const isApproverView = viewMode === 'pending-approvals' || viewMode === 'approved';
 
+  // Render action buttons for a row. Keep logic centralized for readability.
+  const renderActions = (item, isOwner) => {
+    if (viewMode === "pending-approvals") {
+      return (
+        <>
+          {item.status === "InProgress" && (
+            <>
+              <button
+                className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                onClick={() => handleApprove(item.id)}
+                title="Approve"
+              >
+                Approve
+              </button>
+              <button
+                className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                onClick={() => handleReject(item.id)}
+                title="Reject"
+              >
+                Reject
+              </button>
+            </>
+          )}
+        </>
+      );
+    }
+
+    // My Requests / All Permohonan: only owner may edit/submit/delete Draft
+    return (
+      <>
+        {item.status === "Draft" && isOwner && (
+          <>
+            <button
+              className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors"
+              onClick={() => onNavigate && onNavigate('edit-ajuan-pemusnahan', { id: item.id })}
+              title="Edit Draft"
+            >
+              Edit
+            </button>
+            <button
+              className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+              onClick={() => handleSubmit(item.id)}
+              title="Submit for Approval"
+            >
+              Submit
+            </button>
+            <button
+              className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+              onClick={() => handleDelete(item.id)}
+              title="Delete Request"
+            >
+              Delete
+            </button>
+          </>
+        )}
+      </>
+    );
+  };
+
   // Reset to first page when filters change
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -510,6 +569,12 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
                 const jenisData = jenisOptions.find(j => j.id === item.jenis_limbah_b3_id);
                 const jenisName = jenisData?.jenis_limbah || 'N/A'; // Use the separated jenis_limbah field
                 
+                // Check if current user is the owner of this request
+                // Compare by name (case-insensitive) to handle type differences
+                const requesterName = (item.requesterName || '').toString().trim().toLowerCase();
+                const currentUserName = (currentUser?.Nama || '').toString().trim().toLowerCase();
+                const isOwner = requesterName !== '' && requesterName === currentUserName;
+                
                 return (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTimestamp(item.tanggal)}</td>
@@ -538,60 +603,7 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
                       >
                         View
                       </button>
-                      
-                      {viewMode === "pending-approvals" ? (
-                        // Pending Approvals view - show approve/reject actions
-                        <>
-                          {item.status === "InProgress" && (
-                            <>
-                              <button
-                                className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
-                                onClick={() => handleApprove(item.id)}
-                                title="Approve"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                                onClick={() => handleReject(item.id)}
-                                title="Reject"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        // My Requests view - show edit/delete/submit actions
-                        <>
-                          {/* Draft status - pemohon can edit, delete, and submit */}
-                          {item.status === "Draft" && (
-                            <>
-                              <button
-                                className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors"
-                                onClick={() => onNavigate && onNavigate('edit-ajuan-pemusnahan', { id: item.id })}
-                                title="Edit Draft"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
-                                onClick={() => handleSubmit(item.id)}
-                                title="Submit for Approval"
-                              >
-                                Submit
-                              </button>
-                              <button
-                                className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                                onClick={() => handleDelete(item.id)}
-                                title="Delete Request"
-                              >
-                                Delete
-                              </button>
-                            </>
-                          )}
-                        </>
-                      )}
+                      {renderActions(item, isOwner)}
                     </div>
                   </td>
                 </tr>

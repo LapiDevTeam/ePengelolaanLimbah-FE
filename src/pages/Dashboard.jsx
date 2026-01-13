@@ -14,7 +14,11 @@ const Dashboard = ({ onNavigate }) => {
   const [stats, setStats] = useState({
     myRequests: 0,
     pendingApprovals: 0,
-    approved: 0
+    approved: 0,
+    // KL-specific counts (backend should include these when applicable)
+    waitingHseManager: 0,
+    verifikasiLapangan: 0,
+    rejectedKL: 0
   })
   const [isLoadingStats, setIsLoadingStats] = useState(true)
 
@@ -25,7 +29,40 @@ const Dashboard = ({ onNavigate }) => {
       try {
         const result = await api.getDashboardStats()
         if (result.data.success) {
-          setStats(result.data.data)
+          const backendStats = result.data.data || {}
+          setStats(backendStats)
+
+          // Fallback: if backend didn't provide specific counts, fetch minimal counts
+          const needsFallback = typeof backendStats.myRequests !== 'number' ||
+                                typeof backendStats.pendingApprovals !== 'number' ||
+                                typeof backendStats.approved !== 'number' ||
+                                typeof backendStats.waitingHseManager !== 'number' ||
+                                typeof backendStats.verifikasiLapangan !== 'number' ||
+                                typeof backendStats.rejectedKL !== 'number'
+
+          if (needsFallback) {
+            try {
+              // Fetch only pagination totals (use limit=1 to reduce payload)
+              const [myReqRes, pendingRes, approvedRes, verifikasiRes, rejectedRes] = await Promise.all([
+                api.getDestructionRequests({ page: 1, limit: 1, userOnly: true }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                api.getPendingApprovals({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                api.getProcessedByUser({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                api.getVerificationRequests({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                api.getRejectedRequests({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } }))
+              ])
+
+              setStats(prev => ({
+                myRequests: typeof prev.myRequests === 'number' ? prev.myRequests : (myReqRes.data?.pagination?.total || 0),
+                pendingApprovals: typeof prev.pendingApprovals === 'number' ? prev.pendingApprovals : (pendingRes.data?.pagination?.total || 0),
+                approved: typeof prev.approved === 'number' ? prev.approved : (approvedRes.data?.pagination?.total || 0),
+                waitingHseManager: typeof prev.waitingHseManager === 'number' ? prev.waitingHseManager : (pendingRes.data?.pagination?.total || 0),
+                verifikasiLapangan: typeof prev.verifikasiLapangan === 'number' ? prev.verifikasiLapangan : (verifikasiRes.data?.pagination?.total || 0),
+                rejectedKL: typeof prev.rejectedKL === 'number' ? prev.rejectedKL : (rejectedRes.data?.pagination?.total || 0)
+              }))
+            } catch (fallbackError) {
+              console.error('Error fetching fallback counts:', fallbackError)
+            }
+          }
         } else {
           console.error('Failed to fetch stats:', result.data.message)
         }
@@ -129,8 +166,11 @@ const Dashboard = ({ onNavigate }) => {
     }
   }
 
-  // Get user's department - prefer delegatedTo if exists
+  // Get user's department
   const userDepartment = user?.emp_DeptID;
+  // Align naming with DaftarAjuan: hasApprovalAuthority and isFromKL
+  const hasApprovalAuthority = (user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role)) || (user?.log_NIK === "PJKPO");
+  const isFromKL = user?.emp_DeptID && String(user.emp_DeptID).toUpperCase() === "KL";
 
   return (
     <div className="p-6">
@@ -160,7 +200,7 @@ const Dashboard = ({ onNavigate }) => {
         </button>
 
         {/* Pending Approvals Card - Only visible for users with approval authority */}
-        {(user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role) || user?.log_NIK === "PJKPO") && (
+        {hasApprovalAuthority && (
           <button
             onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals' })}
             className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
@@ -180,7 +220,7 @@ const Dashboard = ({ onNavigate }) => {
         )}
 
         {/* Approved Card - Only visible for users with approval authority */}
-        {(user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role) || user?.log_NIK === "PJKPO") && (
+        {hasApprovalAuthority && (
           <button
             onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved' })}
             className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
@@ -197,6 +237,62 @@ const Dashboard = ({ onNavigate }) => {
               <p className="text-3xl font-bold text-blue-600">{stats.approved}</p>
             )}
           </button>
+        )}
+
+        {/* KL-specific status cards for KL users who are not approvers (officer view) */}
+        {isFromKL && !hasApprovalAuthority && (
+          <>
+            <button
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'verifikasi' })}
+              className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Verifikasi Lapangan</h3>
+              {isLoadingStats ? (
+                <div className="flex items-center justify-center h-12">
+                  <svg className="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              ) : (
+                <p className="text-3xl font-bold text-indigo-600">{stats.verifikasiLapangan}</p>
+              )}
+            </button>
+
+            <button
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals' })}
+              className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Waiting HSE Manager</h3>
+              {isLoadingStats ? (
+                <div className="flex items-center justify-center h-12">
+                  <svg className="animate-spin h-8 w-8 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              ) : (
+                <p className="text-3xl font-bold text-yellow-600">{stats.waitingHseManager}</p>
+              )}
+            </button>
+
+            <button
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'rejected' })}
+              className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Rejected (KL)</h3>
+              {isLoadingStats ? (
+                <div className="flex items-center justify-center h-12">
+                  <svg className="animate-spin h-8 w-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              ) : (
+                <p className="text-3xl font-bold text-red-600">{stats.rejectedKL}</p>
+              )}
+            </button>
+          </>
         )}
       </div>
 
@@ -315,7 +411,7 @@ const Dashboard = ({ onNavigate }) => {
           <p>• Download semua lampiran permohonan dalam range tanggal yang dipilih</p>
           <p>• Data diambil dari tanggal pengajuan</p>
           <p>• Satu baris per detail limbah dengan informasi permohonan</p>
-          {userDepartment === 'KL' ? (
+          {isFromKL ? (
             <p className="font-semibold">• User KL: Dapat mendownload data dari semua bagian</p>
           ) : (
             <p className="font-semibold">• User {userDepartment || 'Non-KL'}: Hanya dapat mendownload data dari bagian sendiri ({userDepartment})</p>
@@ -324,7 +420,7 @@ const Dashboard = ({ onNavigate }) => {
       </div>
 
       {/* Generate Logbook Section - Only visible for KL users */}
-      {userDepartment === 'KL' && (
+      {isFromKL && (
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h2 className="text-xl font-semibold text-blue-800 mb-4">Generate Logbook</h2>        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">

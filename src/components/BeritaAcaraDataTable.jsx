@@ -59,6 +59,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [openPermohonanIdx, setOpenPermohonanIdx] = useState(null);
   const itemsPerPage = 8;
   const { user } = useAuth();
   const { getStatusStyle } = useConfigContext();
@@ -68,10 +69,11 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
       try {
         setLoading(true);
         setError(null);
-        
+        // If filtering by permohonan number, fetch a larger set so we can filter client-side
+        const limitParam = (selectedColumn === 'permohonan' && searchTerm) ? 1000 : itemsPerPage;
         const response = await dataAPI.getBeritaAcara({
           page: currentPage,
-          limit: itemsPerPage,
+          limit: limitParam,
           searchTerm: searchTerm,
           selectedColumn: selectedColumn,
         });
@@ -79,9 +81,26 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
         if (response.data.success) {
           // Keep backend field names; API already added `id`.
           const transformedData = response.data.data.map(item => ({ ...item }));
-          
-          setData(transformedData);
-          setTotalItems(response.data.pagination.total);
+
+          // If filtering by permohonan, perform client-side search on `permohonanNumbers`
+          if (selectedColumn === 'permohonan' && searchTerm) {
+            const searchLower = String(searchTerm).trim().toLowerCase();
+            const filteredAll = transformedData.filter(item => {
+              const numbers = Array.isArray(item.permohonanNumbers)
+                ? item.permohonanNumbers
+                : (item.permohonanNumber ? [item.permohonanNumber] : []);
+              return numbers.some(n => String(n || '').toLowerCase().includes(searchLower));
+            });
+
+            // Paginate client-side result
+            const start = (currentPage - 1) * itemsPerPage;
+            const pageSlice = filteredAll.slice(start, start + itemsPerPage);
+            setData(pageSlice);
+            setTotalItems(filteredAll.length);
+          } else {
+            setData(transformedData);
+            setTotalItems(response.data.pagination.total);
+          }
         } else {
           setError(response.data.message || 'Failed to fetch berita acara');
           setData([]);
@@ -104,6 +123,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
     { value: "tanggal", label: "Tgl. Pemusnahan" },
     { value: "bagian", label: "Bagian" },
     { value: "lokasi_verifikasi", label: "Lokasi" },
+    { value: "permohonan", label: "No. Permohonan" },
     { value: "status", label: "Status" }
   ];
 
@@ -213,13 +233,13 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tgl. Pemusnahan
+                No. BAP
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Bagian
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Lokasi
+                No. Permohonan
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -241,9 +261,52 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
             ) : data.length > 0 ? (
               data.map((item, idx) => (
                 <tr key={item.id || item.berita_acara_id || item.request_id || `row-${idx}`} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTimestamp(item.tanggal)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.noBeritaAcara || `BA-${String(item.berita_acara_id).padStart(3, '0')}`}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bagian}</td>                  
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.lokasi_verifikasi}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <div className="relative inline-block" style={{ minWidth: 220 }}>
+                      {(() => {
+                        const numbers = Array.isArray(item.permohonanNumbers) ? item.permohonanNumbers : (item.permohonanNumber ? [item.permohonanNumber] : []);
+                        if (numbers.length === 0) return <span className="text-gray-500">-</span>;
+
+                        const maxShow = 3;
+                        const visible = numbers.slice(0, maxShow);
+                        const hiddenCount = Math.max(0, numbers.length - maxShow);
+
+                        return (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {visible.map((n, i) => (
+                              <span key={i} className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                                {n}
+                              </span>
+                            ))}
+                            {hiddenCount > 0 && (
+                              <div className="relative">
+                                <button
+                                  onClick={() => setOpenPermohonanIdx(openPermohonanIdx === idx ? null : idx)}
+                                  className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs"
+                                  aria-label={`Show ${hiddenCount} more permohonan`}
+                                >
+                                  +{hiddenCount}
+                                </button>
+                                {openPermohonanIdx === idx && (
+                                  <div className="absolute z-20 mt-2 w-64 max-h-48 overflow-auto bg-white border border-gray-200 rounded shadow-lg p-2">
+                                    {numbers.map((n, j) => (
+                                      <div key={j} className="text-sm text-gray-700 py-1 hover:bg-gray-50 rounded">
+                                        {n}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <span
                         className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"

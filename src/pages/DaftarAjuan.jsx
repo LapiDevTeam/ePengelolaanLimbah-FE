@@ -75,7 +75,6 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
 
   // Check if user is from KL department (HSE/KL team) based solely on department ID
   const isFromKL = user?.emp_DeptID && String(user.emp_DeptID).toUpperCase() === "KL";
-  console.log("🚀 ~ DaftarAjuan ~ isFromKL:", isFromKL, "emp_DeptID:", user?.emp_DeptID);
 
   const handleAddApplication = () => {
     // Navigate to form page when implemented

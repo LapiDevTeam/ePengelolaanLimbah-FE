@@ -43,19 +43,24 @@ const Dashboard = ({ onNavigate }) => {
           if (needsFallback) {
             try {
               // Fetch only pagination totals (use limit=1 to reduce payload)
-              const [myReqRes, pendingRes, approvedRes, verifikasiRes, rejectedRes] = await Promise.all([
+              // Use statusFilter for KL-specific counts to match backend filtering
+              const [myReqRes, pendingRes, approvedRes, verifikasiRes, waitingHseRes, rejectedRes] = await Promise.all([
                 api.getDestructionRequests({ page: 1, limit: 1, userOnly: true }).catch(() => ({ data: { pagination: { total: 0 } } })),
                 api.getPendingApprovals({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })),
                 api.getProcessedByUser({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                api.getVerificationRequests({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                api.getRejectedRequests({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } }))
+                // Verifikasi: all requests at step 3
+                api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'Verification' }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                // Waiting HSE Manager: all requests at step 4
+                api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'WaitingHSEManager' }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                // Rejected: all rejected requests
+                api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'Rejected' }).catch(() => ({ data: { pagination: { total: 0 } } }))
               ])
 
               setStats(prev => ({
                 myRequests: typeof prev.myRequests === 'number' ? prev.myRequests : (myReqRes.data?.pagination?.total || 0),
                 pendingApprovals: typeof prev.pendingApprovals === 'number' ? prev.pendingApprovals : (pendingRes.data?.pagination?.total || 0),
                 approved: typeof prev.approved === 'number' ? prev.approved : (approvedRes.data?.pagination?.total || 0),
-                waitingHseManager: typeof prev.waitingHseManager === 'number' ? prev.waitingHseManager : (pendingRes.data?.pagination?.total || 0),
+                waitingHseManager: typeof prev.waitingHseManager === 'number' ? prev.waitingHseManager : (waitingHseRes.data?.pagination?.total || 0),
                 verifikasiLapangan: typeof prev.verifikasiLapangan === 'number' ? prev.verifikasiLapangan : (verifikasiRes.data?.pagination?.total || 0),
                 rejectedKL: typeof prev.rejectedKL === 'number' ? prev.rejectedKL : (rejectedRes.data?.pagination?.total || 0)
               }))
@@ -243,7 +248,7 @@ const Dashboard = ({ onNavigate }) => {
         {isFromKL && !hasApprovalAuthority && (
           <>
             <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'verifikasi' })}
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification' })}
               className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Verifikasi Lapangan</h3>
@@ -260,7 +265,7 @@ const Dashboard = ({ onNavigate }) => {
             </button>
 
             <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals' })}
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager' })}
               className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Waiting HSE Manager</h3>
@@ -277,7 +282,7 @@ const Dashboard = ({ onNavigate }) => {
             </button>
 
             <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'rejected' })}
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected' })}
               className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Rejected (KL)</h3>

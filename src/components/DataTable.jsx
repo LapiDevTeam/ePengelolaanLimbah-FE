@@ -54,7 +54,7 @@ const formatTimestamp = (timestamp) => {
   return formatDateID(timestamp);
 };
 
-const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser }) => {
+const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser, statusFilter = '' }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedColumn, setSelectedColumn] = useState("noPermohonan");
   const [currentPage, setCurrentPage] = useState(1);
@@ -125,6 +125,16 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             searchTerm: searchTerm,
             selectedColumn: selectedColumn
           });
+        } else if (viewMode === "all-permohonan") {
+          // KL: fetch all requests across users (no userOnly filter), optionally filtered by status
+          response = await dataAPI.getDestructionRequests({
+            page: currentPage,
+            limit: itemsPerPage,
+            searchTerm: searchTerm,
+            selectedColumn: selectedColumn,
+            userOnly: false,
+            statusFilter: statusFilter || undefined
+          });
         } else if (viewMode === "approved") {
           // Fetch requests processed (approved/rejected) by this user
           response = await dataAPI.getProcessedByUser({
@@ -175,7 +185,7 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
     };
 
     fetchRequests();
-  }, [currentPage, searchTerm, selectedColumn, user, refreshKey, viewMode]);
+  }, [currentPage, searchTerm, selectedColumn, user, refreshKey, viewMode, statusFilter]);
 
   // Add event listener for data refresh
   useEffect(() => {

@@ -16,7 +16,8 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
         'processedBy': 'approved',
         'my-requests': 'my-requests',
         'pending-approvals': 'pending-approvals',
-        'approved': 'approved'
+        'approved': 'approved',
+        'all-permohonan': 'all-permohonan'
       };
       return viewModeMap[pageData.viewMode] || 'my-requests';
     }
@@ -25,7 +26,10 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   
   const [activeTab, setActiveTab] = useState(getInitialTab());
   
-  // Update activeTab when pageData.viewMode changes
+  // State for status filter (passed from Dashboard)
+  const [statusFilter, setStatusFilter] = useState(pageData?.statusFilter || '');
+
+  // Update activeTab and statusFilter when pageData changes
   useEffect(() => {
     if (pageData?.viewMode) {
       const viewModeMap = {
@@ -34,14 +38,21 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
         'processedBy': 'approved',
         'my-requests': 'my-requests',
         'pending-approvals': 'pending-approvals',
-        'approved': 'approved'
+        'approved': 'approved',
+        'all-permohonan': 'all-permohonan'
       };
       const newTab = viewModeMap[pageData.viewMode];
       if (newTab) {
         setActiveTab(newTab);
       }
     }
-  }, [pageData?.viewMode]);
+    // Update status filter if provided
+    if (pageData?.statusFilter) {
+      setStatusFilter(pageData.statusFilter);
+    } else {
+      setStatusFilter('');
+    }
+  }, [pageData?.viewMode, pageData?.statusFilter]);
   
   // All authenticated users are allowed to create a new permohonan
   const canCreateAjuan = !!user;
@@ -88,10 +99,11 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   }
 
   // Add verifikasi tab for HSE/KL team members
+  // KL users see "All Permohonan" (can view all requests)
   if (isFromKL) {
     tabs.push({
-      id: "verifikasi",
-      label: "Verifikasi",
+      id: "all-permohonan",
+      label: "All Permohonan",
     });
   }
 
@@ -119,6 +131,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
               {activeTab === "pending-approvals" && "Daftar ajuan pemusnahan yang menunggu persetujuan Anda."}
               {activeTab === "approved" && "Daftar ajuan pemusnahan yang telah Anda setujui."}
               {activeTab === "verifikasi" && "Daftar ajuan pemusnahan yang menunggu verifikasi lapangan."}
+              {activeTab === "all-permohonan" && "Daftar semua permohonan pemusnahan (KL dapat melihat seluruh data)."}
               {activeTab === "rejected" && "Daftar ajuan pemusnahan yang ditolak."}
             </p>
           </div>
@@ -162,6 +175,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
         viewMode={activeTab}
         userRole={user?.role}
         currentUser={user}
+        statusFilter={statusFilter}
       />
     </div>
   );

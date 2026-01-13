@@ -61,7 +61,7 @@ export const dataAPI = {
   // Get all destruction requests with pagination and filtering
   getDestructionRequests: async (params = {}) => {
     try {
-      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', userOnly = true } = params;
+      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', userOnly = true, statusFilter = '' } = params;
       
       // Build query params
       const queryParams = new URLSearchParams({
@@ -80,6 +80,11 @@ export const dataAPI = {
       // Add userOnly filter for regular users to see only their own requests
       if (userOnly) {
         queryParams.append('userOnly', 'true');
+      }
+
+      // Add status filter (for KL filtering by specific status)
+      if (statusFilter) {
+        queryParams.append('statusFilter', statusFilter);
       }
 
       const response = await api.get(`/permohonan?${queryParams}`);

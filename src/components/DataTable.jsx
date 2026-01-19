@@ -535,6 +535,9 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 No. Permohonan
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Bagian
+              </th>
               {isApproverView && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Pemohon
@@ -551,13 +554,13 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
           <tbody className="bg-white divide-y divide-gray-200">
             {loading || referenceLoading ? (
               <tr>
-                <td colSpan={isApproverView ? "7" : "6"} className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
+                <td colSpan={isApproverView ? "8" : "7"} className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
                   Loading data...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={isApproverView ? "7" : "6"} className="px-6 py-4 whitespace-nowrap text-sm text-center text-red-600">
+                <td colSpan={isApproverView ? "8" : "7"} className="px-6 py-4 whitespace-nowrap text-sm text-center text-red-600">
                   {error}
                 </td>
               </tr>
@@ -579,6 +582,7 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTimestamp(item.tanggal)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.noPermohonan}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bagian || '-'}</td>
                   {isApproverView && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {item.requesterName || 'Unknown'}
@@ -611,7 +615,7 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
               })
             ) : (
               <tr>
-                <td colSpan={isApproverView ? "7" : "6"} className="px-6 py-12 text-center">
+                <td colSpan={isApproverView ? "8" : "7"} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center">
                     <div className="text-gray-400 mb-2">
                       <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -53,7 +53,7 @@ const formatTimestamp = (timestamp) => {
 
 const BeritaAcaraDataTable = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedColumn, setSelectedColumn] = useState("tanggal");
+  const [selectedColumn, setSelectedColumn] = useState("no_bap");
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -121,6 +121,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
   // Define column mappings based on backend BeritaAcara model
   const columnOptions = [
     { value: "tanggal", label: "Tgl. Pemusnahan" },
+    { value: "no_bap", label: "No. BAP" },
     { value: "bagian", label: "Bagian" },
     { value: "lokasi_verifikasi", label: "Lokasi" },
     { value: "permohonan", label: "No. Permohonan" },
@@ -200,7 +201,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
         </div>
 
         {/* Filter Status Display */}
-        {(searchTerm || (selectedColumn && selectedColumn !== 'tanggal')) && (
+        {(searchTerm || (selectedColumn && selectedColumn !== 'no_bap')) && (
           <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
             <span>Filtering:</span>
             {selectedColumn && selectedColumn !== 'tanggal' && (
@@ -216,7 +217,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
             <button
               onClick={() => {
                 setSearchTerm("");
-                setSelectedColumn("tanggal");
+                setSelectedColumn("no_bap");
                 setCurrentPage(1);
               }}
               className="text-red-600 hover:text-red-800 text-xs underline"

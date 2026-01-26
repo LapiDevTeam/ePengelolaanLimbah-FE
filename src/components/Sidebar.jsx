@@ -63,6 +63,8 @@ const XIcon = () => (
 const Sidebar = ({ currentPage, onNavigate, isCollapsed, setIsCollapsed }) => {
   const { user, logout } = useAuth()
   const [isLimbahExpanded, setIsLimbahExpanded] = useState(true)
+  const [isRecallExpanded, setIsRecallExpanded] = useState(true)
+  const [isRecallPrecursorExpanded, setIsRecallPrecursorExpanded] = useState(true)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleLogout = async () => {
@@ -97,14 +99,58 @@ const Sidebar = ({ currentPage, onNavigate, isCollapsed, setIsCollapsed }) => {
         {
           id: "daftar-ajuan",
           label: "Daftar Ajuan Pemusnahan",
-          page: "daftar-ajuan",
-          onClick: () => onNavigate("daftar-ajuan"),
+          page: "daftar-ajuan-b3",
+          onClick: () => onNavigate("daftar-ajuan", { group: "limbah-b3", pageAlias: "daftar-ajuan-b3" }),
         },
         {
           id: "berita-acara",
           label: "Berita Acara Pemusnahan",
-          page: "berita-acara",
-          onClick: () => onNavigate("berita-acara"),
+          page: "berita-acara-b3",
+          onClick: () => onNavigate("berita-acara", { group: "limbah-b3", pageAlias: "berita-acara-b3" }),
+        },
+      ],
+    },
+    {
+      id: "recall",
+      label: "Recall",
+      icon: <FileIcon />,
+      hasSubmenu: true,
+      isExpanded: isRecallExpanded,
+      onToggle: () => setIsRecallExpanded(!isRecallExpanded),
+      submenu: [
+        {
+          id: "recall-ajuan",
+          label: "Daftar Ajuan Pemusnahan",
+          page: "daftar-ajuan-recall",
+          onClick: () => onNavigate("daftar-ajuan", { group: "recall", pageAlias: "daftar-ajuan-recall" }),
+        },
+        {
+          id: "recall-berita-acara",
+          label: "Berita Acara Pemusnahan",
+          page: "berita-acara-recall",
+          onClick: () => onNavigate("berita-acara", { group: "recall", pageAlias: "berita-acara-recall" }),
+        },
+      ],
+    },
+    {
+      id: "recall-precursor-oot",
+      label: "Recall (Precursor & OOT)",
+      icon: <FileIcon />,
+      hasSubmenu: true,
+      isExpanded: isRecallPrecursorExpanded,
+      onToggle: () => setIsRecallPrecursorExpanded(!isRecallPrecursorExpanded),
+      submenu: [
+        {
+          id: "recall-precursor-ajuan",
+          label: "Daftar Ajuan Pemusnahan",
+          page: "daftar-ajuan-recall-precursor-oot",
+          onClick: () => onNavigate("daftar-ajuan", { group: "recall-precursor", pageAlias: "daftar-ajuan-recall-precursor-oot" }),
+        },
+        {
+          id: "recall-precursor-berita-acara",
+          label: "Berita Acara Pemusnahan",
+          page: "berita-acara-recall-precursor-oot",
+          onClick: () => onNavigate("berita-acara", { group: "recall-precursor", pageAlias: "berita-acara-recall-precursor-oot" }),
         },
       ],
     },

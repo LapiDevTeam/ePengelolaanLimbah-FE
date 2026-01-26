@@ -81,6 +81,10 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
   
   const itemsPerPage = 8;
   const { user } = useAuth();
+  
+  // Read group from URL query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const groupFilter = urlParams.get('group') || null;
 
   // Fetch reference data on component mount
   useEffect(() => {
@@ -123,7 +127,8 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
-            selectedColumn: selectedColumn
+            selectedColumn: selectedColumn,
+            group: groupFilter
           });
         } else if (viewMode === "all-permohonan") {
           // KL: fetch all requests across users (no userOnly filter), optionally filtered by status
@@ -133,7 +138,8 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
             userOnly: false,
-            statusFilter: statusFilter || undefined
+            statusFilter: statusFilter || undefined,
+            group: groupFilter
           });
         } else if (viewMode === "approved") {
           // Fetch requests processed (approved/rejected) by this user
@@ -141,7 +147,8 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
-            selectedColumn: selectedColumn
+            selectedColumn: selectedColumn,
+            group: groupFilter
           });
         } else if (viewMode === "rejected") {
           // Fetch rejected requests (only for HSE Manager)
@@ -149,7 +156,8 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
-            selectedColumn: selectedColumn
+            selectedColumn: selectedColumn,
+            group: groupFilter
           });
         } else if (viewMode === "verifikasi") {
           // Fetch verification requests (for HSE/KL team)
@@ -157,7 +165,8 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
-            selectedColumn: selectedColumn
+            selectedColumn: selectedColumn,
+            group: groupFilter
           });
         } else {
           // Fetch user's own requests (default behavior)
@@ -166,7 +175,8 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            userOnly: true
+            userOnly: true,
+            group: groupFilter
           });
         }
         
@@ -185,7 +195,7 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
     };
 
     fetchRequests();
-  }, [currentPage, searchTerm, selectedColumn, user, refreshKey, viewMode, statusFilter]);
+  }, [currentPage, searchTerm, selectedColumn, user, refreshKey, viewMode, statusFilter, groupFilter]);
 
   // Add event listener for data refresh
   useEffect(() => {

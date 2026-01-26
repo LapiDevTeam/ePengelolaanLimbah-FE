@@ -180,8 +180,21 @@ const Dashboard = ({ onNavigate }) => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-gray-600">Welcome to ePengelolaan Limbah</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="mt-2 text-gray-600">Welcome to ePengelolaan Limbah</p>
+          </div>
+          {user && (
+            <button
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+              onClick={() => onNavigate("tambah-ajuan-pemusnahan")}
+            >
+              <span className="text-lg leading-none">+</span>
+              <span>Tambah Ajuan</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import DataTable from "../components/DataTable";
 import { useAuth } from "../contexts/AuthContext";
-import { showInfo } from "../utils/sweetAlert";
 
 const DaftarAjuan = ({ onNavigate, pageData }) => {
   const { user } = useAuth();
@@ -62,9 +61,6 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
     }
   }, [activeTab]);
   
-  // All authenticated users are allowed to create a new permohonan
-  const canCreateAjuan = !!user;
-
   // Check if user has approval authority (Manager, HSE, or other approval roles)
   // Also include PJKPO users based on their log_NIK
   const hasApprovalAuthority = (user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role)) || 
@@ -142,15 +138,6 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
               {activeTab === "rejected" && "Daftar ajuan pemusnahan yang ditolak."}
             </p>
           </div>
-          {(canCreateAjuan || (user?.delegatedTo && hasApprovalAuthority)) && activeTab === "my-requests" && (
-            <button
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
-              onClick={handleAddApplication}
-            >
-              <span className="text-lg leading-none">+</span>
-              <span>Tambah Ajuan</span>
-            </button>
-          )}
         </div>
       </div>
 

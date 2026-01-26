@@ -63,6 +63,10 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
   const itemsPerPage = 8;
   const { user } = useAuth();
   const { getStatusStyle } = useConfigContext();
+  
+  // Read group from URL query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const groupFilter = urlParams.get('group') || null;
 
   useEffect(() => {
     const fetchBeritaAcara = async () => {
@@ -76,6 +80,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
           limit: limitParam,
           searchTerm: searchTerm,
           selectedColumn: selectedColumn,
+          group: groupFilter,
         });
         
         if (response.data.success) {
@@ -116,7 +121,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
     };
 
     fetchBeritaAcara();
-  }, [currentPage, searchTerm, selectedColumn, user]);
+  }, [currentPage, searchTerm, selectedColumn, groupFilter]);
 
   // Define column mappings based on backend BeritaAcara model
   const columnOptions = [

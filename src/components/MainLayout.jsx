@@ -69,6 +69,7 @@ const getCurrentPageFromURL = () => {
 const MainLayout = () => {
   const initial = getCurrentPageFromURL()
   const [currentPage, setCurrentPage] = useState(initial.page)
+  const [routePage, setRoutePage] = useState(initial.page)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [pageData, setPageData] = useState(initial.id ? { id: initial.id } : null) // Store data passed between pages
 
@@ -77,6 +78,7 @@ const MainLayout = () => {
     const handlePopState = () => {
       const current = getCurrentPageFromURL()
       setCurrentPage(current.page)
+      setRoutePage(current.page)
       setPageData(current.id ? { id: current.id } : null)
     }
 
@@ -93,11 +95,33 @@ const MainLayout = () => {
     // Include base path for production
     const basePath = getBasePath();
     let url = page === "dashboard" ? `${basePath}/` : `${basePath}/${page}`
+    
     if (data && data.id) {
       url = `${basePath}/${page}/${data.id}`
     }
+    
+    // Append query params if provided
+    const queryParams = new URLSearchParams();
+    if (data) {
+      if (data.group) queryParams.append('group', data.group);
+      if (data.keyword) queryParams.append('keyword', data.keyword);
+    }
+    if (queryParams.toString()) {
+      url += `?${queryParams.toString()}`
+    }
+    
     window.history.pushState({}, '', url)
-    setCurrentPage(page)
+    
+    // Set routePage to actual page (for rendering)
+    setRoutePage(page)
+    
+    // Use pageAlias for highlighting if provided, otherwise use page
+    if (data && data.pageAlias) {
+      setCurrentPage(data.pageAlias)
+    } else {
+      setCurrentPage(page)
+    }
+    
     // Prefer explicit data param; if absent but URL has id, preserve it
     if (data) setPageData(data)
     else {
@@ -107,7 +131,7 @@ const MainLayout = () => {
   }
 
   const renderPage = () => {
-    switch (currentPage) {
+    switch (routePage) {
       case "dashboard":
         return <Dashboard onNavigate={handleNavigate} />
       case "daftar-ajuan":
@@ -169,7 +193,7 @@ const MainLayout = () => {
   }
 
   // For print pages, render without layout
-  if (currentPage === "permohonan-print" || currentPage === "berita-acara-print") {
+  if (routePage === "permohonan-print" || routePage === "berita-acara-print") {
     return renderPage();
   }
 

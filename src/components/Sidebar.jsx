@@ -60,7 +60,7 @@ const XIcon = () => (
   </svg>
 )
 
-const Sidebar = ({ currentPage, onNavigate, isCollapsed, setIsCollapsed }) => {
+const Sidebar = ({ currentPage, onNavigate, isCollapsed, setIsCollapsed, hasPendingApproval, pendingApprovalByGroup = {} }) => {
   const { user, logout } = useAuth()
   const [isLimbahExpanded, setIsLimbahExpanded] = useState(true)
   const [isRecallExpanded, setIsRecallExpanded] = useState(true)
@@ -268,20 +268,34 @@ const Sidebar = ({ currentPage, onNavigate, isCollapsed, setIsCollapsed }) => {
               {/* Submenu - only show when expanded */}
               {!isCollapsed && item.hasSubmenu && item.isExpanded && (
                 <ul className="mt-1 ml-6 space-y-1">
-                  {item.submenu.map((subItem) => (
-                    <li key={subItem.id}>
-                      <div
-                        className={`p-2 rounded-md cursor-pointer text-sm transition-colors ${
-                          currentPage === subItem.page
-                            ? "bg-green-50 text-green-600"
-                            : "text-gray-600 hover:bg-gray-50"
-                        }`}
-                        onClick={subItem.onClick}
-                      >
-                        {subItem.label}
-                      </div>
-                    </li>
-                  ))}
+                  {item.submenu.map((subItem) => {
+                    // Map submenu IDs to group keys for badge display
+                    const groupKeyMap = {
+                      'berita-acara': 'limbah-b3',
+                      'recall-berita-acara': 'recall',
+                      'recall-precursor-berita-acara': 'recall-precursor'
+                    }
+                    const groupKey = groupKeyMap[subItem.id]
+                    const hasPending = groupKey && pendingApprovalByGroup[groupKey] > 0
+                    
+                    return (
+                      <li key={subItem.id}>
+                        <div
+                          className={`p-2 rounded-md cursor-pointer text-sm transition-colors flex items-center justify-between ${
+                            currentPage === subItem.page
+                              ? "bg-green-50 text-green-600"
+                              : "text-gray-600 hover:bg-gray-50"
+                          }`}
+                          onClick={subItem.onClick}
+                        >
+                          <span>{subItem.label}</span>
+                          {hasPending && (
+                            <span className="w-2 h-2 bg-red-500 rounded-full" title="Pending approval"></span>
+                          )}
+                        </div>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </li>

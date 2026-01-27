@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { dataAPI } from "../services/api";
 import { showInfo } from "../utils/sweetAlert";
 
-const BeritaAcara = ({ onNavigate }) => {
+const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGroup }) => {
   const { user } = useAuth();
   const [isCreatorAllowed, setIsCreatorAllowed] = useState(false);
   const [creatorCheckLoading, setCreatorCheckLoading] = useState(true);
@@ -71,7 +71,7 @@ const BeritaAcara = ({ onNavigate }) => {
         </div>
       </div>
 
-      <BeritaAcaraDataTable onNavigate={onNavigate} />
+      <BeritaAcaraDataTable onNavigate={onNavigate} onPendingApprovalChange={onPendingApprovalChange} pendingApprovalByGroup={pendingApprovalByGroup} />
     </div>
   );
 };

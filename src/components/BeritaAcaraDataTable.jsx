@@ -51,7 +51,7 @@ const formatTimestamp = (timestamp) => {
   return formatted || String(timestamp);
 };
 
-const BeritaAcaraDataTable = ({ onNavigate }) => {
+const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedColumn, setSelectedColumn] = useState("no_bap");
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,6 +60,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openPermohonanIdx, setOpenPermohonanIdx] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
   const itemsPerPage = 8;
   const { user } = useAuth();
   const { getStatusStyle } = useConfigContext();
@@ -67,6 +68,9 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
   // Read group from URL query params
   const urlParams = new URLSearchParams(window.location.search);
   const groupFilter = urlParams.get('group') || null;
+
+  // Check if user has approval authority for Berita Acara (includes PL for Head of Plant)
+  const hasApprovalAuthority = user?.role && ["Manager", "HSE", "APJ", "QA", "PL"].includes(user.role);
 
   useEffect(() => {
     const fetchBeritaAcara = async () => {
@@ -105,6 +109,12 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
           } else {
             setData(transformedData);
             setTotalItems(response.data.pagination.total);
+          }
+
+          // Notify parent of pending approval state
+          if (onPendingApprovalChange) {
+            const hasPendingApproval = transformedData.some(row => row.can_sign === true);
+            onPendingApprovalChange(hasPendingApproval);
           }
         } else {
           setError(response.data.message || 'Failed to fetch berita acara');
@@ -160,8 +170,46 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
   const isPemohon = user?.role === "Pemohon";
   const isManager = user?.role === "Manager";
 
+  // Build tabs dynamically based on approval authority
+  const tabs = [
+    { id: "all", label: "All" },
+  ];
+  
+  if (hasApprovalAuthority) {
+    tabs.push({ id: "pending-approval", label: "Pending Approval" });
+  }
+
+  const getFilteredData = () => {
+    if (activeTab === "all") return data;
+    if (activeTab === "pending-approval") {
+      return data.filter((row) => row.can_sign === true && row.status !== "Completed");
+    }
+    return data;
+  };
+
+  const filteredData = getFilteredData();
+
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <div className="flex px-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? "border-green-500 text-green-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Search and Filter Controls */}
       <div className="p-6 border-b border-gray-200 space-y-4">
         <div className="flex items-center justify-between gap-4">
@@ -265,7 +313,7 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
                 </td>
               </tr>
             ) : data.length > 0 ? (
-              data.map((item, idx) => (
+              filteredData.map((item, idx) => (
                 <tr key={item.id || item.berita_acara_id || item.request_id || `row-${idx}`} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {item.noBeritaAcara || `BA-${String(item.berita_acara_id).padStart(3, '0')}`}
@@ -343,7 +391,11 @@ const BeritaAcaraDataTable = ({ onNavigate }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <p className="text-gray-500 text-sm">No data available.</p>
+                    <p className="text-gray-500 text-sm">
+                      {activeTab === "pending-approval" 
+                        ? "No pending approvals." 
+                        : "No data available."}
+                    </p>
                   </div>
                 </td>
               </tr>

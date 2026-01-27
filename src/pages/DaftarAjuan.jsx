@@ -64,7 +64,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   // Check if user has approval authority (Manager, HSE, or other approval roles)
   // Also include PJKPO users based on their log_NIK
   const hasApprovalAuthority = (user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role)) || 
-                               (user?.log_NIK === "PJKPO");
+  (user?.log_NIK === "PJKPO");
 
   // Check if user is HSE Manager (based on Jabatan field)
   const isHSEManager = user?.Jabatan === "Health,Safety & Environment Manager";

@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const fetchProfileFromToken = useCallback(async (token) => {
     try {
       const result = await dataAPI.getCurrentProfile();
+      console.log("🚀 ~ AuthProvider ~ result:", result)
       if (result.data.success) {
         // Determine role based on job title/level
         let userRole = result.data.data.user.role || "Pemohon";
@@ -28,6 +29,8 @@ export const AuthProvider = ({ children }) => {
             userRole = "HSE";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
+          } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
+            userRole = "PL";
           } else if (jabatan.includes("qa") || jabatan.includes("quality")) {
             userRole = "QA";
           }
@@ -115,6 +118,8 @@ export const AuthProvider = ({ children }) => {
             userRole = "HSE";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
+          } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
+            userRole = "PL";
           } else if (jabatan.includes("qa") || jabatan.includes("quality")) {
             userRole = "QA";
           }
@@ -224,6 +229,8 @@ export const AuthProvider = ({ children }) => {
             userRole = "HSE";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
+          } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
+            userRole = "PL";
           } else if (jabatan.includes("qa") || jabatan.includes("quality")) {
             userRole = "QA";
           }
@@ -305,6 +312,8 @@ export const AuthProvider = ({ children }) => {
             userRole = "HSE";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
+          } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
+            userRole = "PL";
           } else if (jabatan.includes("qa") || jabatan.includes("quality")) {
             userRole = "QA";
           }
@@ -398,6 +407,8 @@ export const AuthProvider = ({ children }) => {
             userRole = "HSE";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
+          } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
+            userRole = "PL";
           } else if (jabatan.includes("qa") || jabatan.includes("quality")) {
             userRole = "QA";
           }

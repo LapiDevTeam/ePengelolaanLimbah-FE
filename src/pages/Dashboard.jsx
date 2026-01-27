@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext"
 import api from "../services/api"
 import { showSuccess, showError, showWarning } from "../utils/sweetAlert"
 
-const Dashboard = ({ onNavigate }) => {
+const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 } }) => {
   const { user, fetchProfile } = useAuth()
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -21,6 +21,14 @@ const Dashboard = ({ onNavigate }) => {
     rejectedKL: 0
   })
   const [isLoadingStats, setIsLoadingStats] = useState(true)
+  const [statsByGroup, setStatsByGroup] = useState({
+    myRequests: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+    pendingApprovals: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+    approved: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+    waitingHseManager: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+    verifikasiLapangan: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+    rejectedKL: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 }
+  })
 
   // Fetch dashboard statistics on component mount
   useEffect(() => {
@@ -42,27 +50,75 @@ const Dashboard = ({ onNavigate }) => {
 
           if (needsFallback) {
             try {
-              // Fetch only pagination totals (use limit=1 to reduce payload)
-              // Use statusFilter for KL-specific counts to match backend filtering
-              const [myReqRes, pendingRes, approvedRes, verifikasiRes, waitingHseRes, rejectedRes] = await Promise.all([
-                api.getDestructionRequests({ page: 1, limit: 1, userOnly: true }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                api.getPendingApprovals({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                api.getProcessedByUser({ page: 1, limit: 1 }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                // Verifikasi: all requests at step 3
-                api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'Verification' }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                // Waiting HSE Manager: all requests at step 4
-                api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'WaitingHSEManager' }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                // Rejected: all rejected requests
-                api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'Rejected' }).catch(() => ({ data: { pagination: { total: 0 } } }))
-              ])
-
+              const groups = ['limbah-b3', 'recall', 'recall-precursor']
+              
+              // Fetch counts by group for each status
+              const groupResults = await Promise.all(
+                groups.map(async (group) => {
+                  const [myReq, pending, approved, verifikasi, waitingHse, rejected] = await Promise.all([
+                    api.getDestructionRequests({ page: 1, limit: 1, userOnly: true, group }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                    api.getPendingApprovals({ page: 1, limit: 1, group }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                    api.getProcessedByUser({ page: 1, limit: 1, group }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                    api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'Verification', group }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                    api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'WaitingHSEManager', group }).catch(() => ({ data: { pagination: { total: 0 } } })),
+                    api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'Rejected', group }).catch(() => ({ data: { pagination: { total: 0 } } }))
+                  ])
+                  
+                  return {
+                    group,
+                    myRequests: myReq.data?.pagination?.total || 0,
+                    pendingApprovals: pending.data?.pagination?.total || 0,
+                    approved: approved.data?.pagination?.total || 0,
+                    verifikasiLapangan: verifikasi.data?.pagination?.total || 0,
+                    waitingHseManager: waitingHse.data?.pagination?.total || 0,
+                    rejectedKL: rejected.data?.pagination?.total || 0
+                  }
+                })
+              )
+              
+              // Aggregate group results
+              const groupStats = {
+                myRequests: {},
+                pendingApprovals: {},
+                approved: {},
+                waitingHseManager: {},
+                verifikasiLapangan: {},
+                rejectedKL: {}
+              }
+              
+              let totals = {
+                myRequests: 0,
+                pendingApprovals: 0,
+                approved: 0,
+                waitingHseManager: 0,
+                verifikasiLapangan: 0,
+                rejectedKL: 0
+              }
+              
+              groupResults.forEach(result => {
+                groupStats.myRequests[result.group] = result.myRequests
+                groupStats.pendingApprovals[result.group] = result.pendingApprovals
+                groupStats.approved[result.group] = result.approved
+                groupStats.waitingHseManager[result.group] = result.waitingHseManager
+                groupStats.verifikasiLapangan[result.group] = result.verifikasiLapangan
+                groupStats.rejectedKL[result.group] = result.rejectedKL
+                
+                totals.myRequests += result.myRequests
+                totals.pendingApprovals += result.pendingApprovals
+                totals.approved += result.approved
+                totals.waitingHseManager += result.waitingHseManager
+                totals.verifikasiLapangan += result.verifikasiLapangan
+                totals.rejectedKL += result.rejectedKL
+              })
+              
+              setStatsByGroup(groupStats)
               setStats(prev => ({
-                myRequests: typeof prev.myRequests === 'number' ? prev.myRequests : (myReqRes.data?.pagination?.total || 0),
-                pendingApprovals: typeof prev.pendingApprovals === 'number' ? prev.pendingApprovals : (pendingRes.data?.pagination?.total || 0),
-                approved: typeof prev.approved === 'number' ? prev.approved : (approvedRes.data?.pagination?.total || 0),
-                waitingHseManager: typeof prev.waitingHseManager === 'number' ? prev.waitingHseManager : (waitingHseRes.data?.pagination?.total || 0),
-                verifikasiLapangan: typeof prev.verifikasiLapangan === 'number' ? prev.verifikasiLapangan : (verifikasiRes.data?.pagination?.total || 0),
-                rejectedKL: typeof prev.rejectedKL === 'number' ? prev.rejectedKL : (rejectedRes.data?.pagination?.total || 0)
+                myRequests: typeof prev.myRequests === 'number' ? prev.myRequests : totals.myRequests,
+                pendingApprovals: typeof prev.pendingApprovals === 'number' ? prev.pendingApprovals : totals.pendingApprovals,
+                approved: typeof prev.approved === 'number' ? prev.approved : totals.approved,
+                waitingHseManager: typeof prev.waitingHseManager === 'number' ? prev.waitingHseManager : totals.waitingHseManager,
+                verifikasiLapangan: typeof prev.verifikasiLapangan === 'number' ? prev.verifikasiLapangan : totals.verifikasiLapangan,
+                rejectedKL: typeof prev.rejectedKL === 'number' ? prev.rejectedKL : totals.rejectedKL
               }))
             } catch (fallbackError) {
               console.error('Error fetching fallback counts:', fallbackError)
@@ -175,7 +231,41 @@ const Dashboard = ({ onNavigate }) => {
   const userDepartment = user?.emp_DeptID;
   // Align naming with DaftarAjuan: hasApprovalAuthority and isFromKL
   const hasApprovalAuthority = (user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role)) || (user?.log_NIK === "PJKPO");
+  const hasBeritaAcaraAuthority = user?.role && ["Manager", "HSE", "APJ", "QA", "PL"].includes(user.role);
   const isFromKL = user?.emp_DeptID && String(user.emp_DeptID).toUpperCase() === "KL";
+
+  // Reusable component for group breakdown
+  const GroupBreakdown = ({ groupCounts, onGroupClick, basePage, baseViewMode }) => {
+    const groupLabels = {
+      'limbah-b3': 'Limbah B3',
+      'recall': 'Recall',
+      'recall-precursor': 'Recall (Precursor & OOT)'
+    }
+    
+    const hasAnyCount = Object.values(groupCounts).some(count => count > 0)
+    if (!hasAnyCount) return null
+    
+    return (
+      <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+        {Object.entries(groupCounts).map(([group, count]) => {
+          if (count === 0) return null
+          return (
+            <button
+              key={group}
+              onClick={(e) => {
+                e.stopPropagation()
+                onGroupClick(group)
+              }}
+              className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded px-2 py-1 transition-colors"
+            >
+              <span>{groupLabels[group]}</span>
+              <span className="font-semibold">{count}</span>
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
@@ -200,88 +290,39 @@ const Dashboard = ({ onNavigate }) => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* My Requests Card - Always visible */}
-        <button
-          onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests' })}
-          className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">My Requests</h3>
-          {isLoadingStats ? (
-            <div className="flex items-center justify-center h-12">
-              <svg className="animate-spin h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-          ) : (
-            <p className="text-3xl font-bold text-green-600">{stats.myRequests}</p>
+        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+          <button
+            onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests' })}
+            className="w-full text-left"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">My Requests</h3>
+            {isLoadingStats ? (
+              <div className="flex items-center justify-center h-12">
+                <svg className="animate-spin h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            ) : (
+              <p className="text-3xl font-bold text-green-600">{stats.myRequests}</p>
+            )}
+          </button>
+          {!isLoadingStats && (
+            <GroupBreakdown 
+              groupCounts={statsByGroup.myRequests}
+              onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests', group, pageAlias: `daftar-ajuan-${group}` })}
+            />
           )}
-        </button>
+        </div>
 
         {/* Pending Approvals Card - Only visible for users with approval authority */}
         {hasApprovalAuthority && (
-          <button
-            onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals' })}
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Pending Approvals</h3>
-            {isLoadingStats ? (
-              <div className="flex items-center justify-center h-12">
-                <svg className="animate-spin h-8 w-8 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-            ) : (
-              <p className="text-3xl font-bold text-yellow-600">{stats.pendingApprovals}</p>
-            )}
-          </button>
-        )}
-
-        {/* Approved Card - Only visible for users with approval authority */}
-        {hasApprovalAuthority && (
-          <button
-            onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved' })}
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Approved</h3>
-            {isLoadingStats ? (
-              <div className="flex items-center justify-center h-12">
-                <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-            ) : (
-              <p className="text-3xl font-bold text-blue-600">{stats.approved}</p>
-            )}
-          </button>
-        )}
-
-        {/* KL-specific status cards for KL users who are not approvers (officer view) */}
-        {isFromKL && !hasApprovalAuthority && (
-          <>
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification' })}
-              className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals' })}
+              className="w-full text-left"
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Verifikasi Lapangan</h3>
-              {isLoadingStats ? (
-                <div className="flex items-center justify-center h-12">
-                  <svg className="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </div>
-              ) : (
-                <p className="text-3xl font-bold text-indigo-600">{stats.verifikasiLapangan}</p>
-              )}
-            </button>
-
-            <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager' })}
-              className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Waiting HSE Manager</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Pending Approvals</h3>
               {isLoadingStats ? (
                 <div className="flex items-center justify-center h-12">
                   <svg className="animate-spin h-8 w-8 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -290,26 +331,171 @@ const Dashboard = ({ onNavigate }) => {
                   </svg>
                 </div>
               ) : (
-                <p className="text-3xl font-bold text-yellow-600">{stats.waitingHseManager}</p>
+                <p className="text-3xl font-bold text-yellow-600">{stats.pendingApprovals}</p>
               )}
             </button>
-
+            {!isLoadingStats && (
+              <GroupBreakdown 
+                groupCounts={statsByGroup.pendingApprovals}
+                onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals', group, pageAlias: `daftar-ajuan-${group}` })}
+              />
+            )}
+          </div>
+        )}
+        {/* Approved Card - Only visible for users with approval authority */}
+        {hasApprovalAuthority && (
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected' })}
-              className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer text-left"
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved' })}
+              className="w-full text-left"
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Rejected (KL)</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Approved</h3>
               {isLoadingStats ? (
                 <div className="flex items-center justify-center h-12">
-                  <svg className="animate-spin h-8 w-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </div>
               ) : (
-                <p className="text-3xl font-bold text-red-600">{stats.rejectedKL}</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.approved}</p>
               )}
             </button>
+            {!isLoadingStats && (
+              <GroupBreakdown 
+                groupCounts={statsByGroup.approved}
+                onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved', group, pageAlias: `daftar-ajuan-${group}` })}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Berita Acara Pending Approval Card - Only visible for users with Berita Acara approval authority */}
+        {hasBeritaAcaraAuthority && (() => {
+          const totalPending = Object.values(pendingApprovalByGroup).reduce((sum, count) => sum + count, 0)
+          if (totalPending === 0) return null
+          
+          return (
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => onNavigate && onNavigate('berita-acara')}
+                className="w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Berita Acara - Pending Approval</h3>
+                <p className="text-3xl font-bold text-orange-600 mb-4">{totalPending}</p>
+              </button>
+              {totalPending > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                  {pendingApprovalByGroup['limbah-b3'] > 0 && (
+                    <button
+                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'limbah-b3', pageAlias: 'berita-acara-b3' })}
+                      className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded px-2 py-1 transition-colors"
+                    >
+                      <span>Limbah B3</span>
+                      <span className="font-semibold">{pendingApprovalByGroup['limbah-b3']}</span>
+                    </button>
+                  )}
+                  {pendingApprovalByGroup['recall'] > 0 && (
+                    <button
+                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'recall', pageAlias: 'berita-acara-recall' })}
+                      className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded px-2 py-1 transition-colors"
+                    >
+                      <span>Recall</span>
+                      <span className="font-semibold">{pendingApprovalByGroup['recall']}</span>
+                    </button>
+                  )}
+                  {pendingApprovalByGroup['recall-precursor'] > 0 && (
+                    <button
+                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'recall-precursor', pageAlias: 'berita-acara-recall-precursor-oot' })}
+                      className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded px-2 py-1 transition-colors"
+                    >
+                      <span>Recall (Precursor & OOT)</span>
+                      <span className="font-semibold">{pendingApprovalByGroup['recall-precursor']}</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* KL-specific status cards for KL users who are not approvers (officer view) */}
+        {isFromKL && !hasApprovalAuthority && (
+          <>
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification' })}
+                className="w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Verifikasi Lapangan</h3>
+                {isLoadingStats ? (
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-indigo-600">{stats.verifikasiLapangan}</p>
+                )}
+              </button>
+              {!isLoadingStats && (
+                <GroupBreakdown 
+                  groupCounts={statsByGroup.verifikasiLapangan}
+                  onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification', group, pageAlias: `daftar-ajuan-${group}` })}
+                />
+              )}
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager' })}
+                className="w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Waiting HSE Manager</h3>
+                {isLoadingStats ? (
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="animate-spin h-8 w-8 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-yellow-600">{stats.waitingHseManager}</p>
+                )}
+              </button>
+              {!isLoadingStats && (
+                <GroupBreakdown 
+                  groupCounts={statsByGroup.waitingHseManager}
+                  onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager', group, pageAlias: `daftar-ajuan-${group}` })}
+                />
+              )}
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+              <button
+                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected' })}
+                className="w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Rejected (KL)</h3>
+                {isLoadingStats ? (
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="animate-spin h-8 w-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-red-600">{stats.rejectedKL}</p>
+                )}
+              </button>
+              {!isLoadingStats && (
+                <GroupBreakdown 
+                  groupCounts={statsByGroup.rejectedKL}
+                  onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected', group, pageAlias: `daftar-ajuan-${group}` })}
+                />
+              )}
+            </div>
           </>
         )}
       </div>

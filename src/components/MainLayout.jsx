@@ -72,6 +72,12 @@ const MainLayout = () => {
   const [routePage, setRoutePage] = useState(initial.page)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [pageData, setPageData] = useState(initial.id ? { id: initial.id } : null) // Store data passed between pages
+  const [hasPendingApproval, setHasPendingApproval] = useState(false)
+  const [pendingApprovalByGroup, setPendingApprovalByGroup] = useState({
+    'limbah-b3': 0,
+    'recall': 0,
+    'recall-precursor': 0
+  })
 
   useEffect(() => {
     // Handle browser back/forward buttons
@@ -87,6 +93,42 @@ const MainLayout = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState)
     }
+  }, [])
+
+  useEffect(() => {
+    const fetchBeritaAcaraPendingApprovals = async () => {
+      try {
+        const groups = ['limbah-b3', 'recall', 'recall-precursor']
+        const results = await Promise.all(
+          groups.map(group => 
+            import('../services/api').then(module => module.default.getBeritaAcara({ page: 1, limit: 1000, group }))
+              .then(res => {
+                if (res.data.success) {
+                  const data = res.data.data || []
+                  const count = data.filter(row => row.can_sign === true).length
+                  return { group, count }
+                }
+                return { group, count: 0 }
+              })
+              .catch(() => ({ group, count: 0 }))
+          )
+        )
+
+        const counts = {}
+        results.forEach(({ group, count }) => {
+          counts[group] = count
+        })
+        setPendingApprovalByGroup(counts)
+        
+        // Update hasPendingApproval for backward compatibility
+        const hasAny = Object.values(counts).some(count => count > 0)
+        setHasPendingApproval(hasAny)
+      } catch (error) {
+        console.error('Error fetching Berita Acara pending approvals:', error)
+      }
+    }
+
+    fetchBeritaAcaraPendingApprovals()
   }, [])
 
   const handleNavigate = (page, data = null) => {
@@ -133,7 +175,7 @@ const MainLayout = () => {
   const renderPage = () => {
     switch (routePage) {
       case "dashboard":
-        return <Dashboard onNavigate={handleNavigate} />
+        return <Dashboard onNavigate={handleNavigate} pendingApprovalByGroup={pendingApprovalByGroup} />
       case "daftar-ajuan":
         return <DaftarAjuan onNavigate={handleNavigate} pageData={pageData} />
       case "detail-ajuan":
@@ -156,7 +198,7 @@ const MainLayout = () => {
       case "pending-approvals":
         return <PendingApprovals onNavigate={handleNavigate} />
       case "berita-acara":
-        return <BeritaAcara onNavigate={handleNavigate} />
+        return <BeritaAcara onNavigate={handleNavigate} onPendingApprovalChange={setHasPendingApproval} pendingApprovalByGroup={pendingApprovalByGroup} />
       case "detail-berita-acara":
         if (!pageData?.id) {
           handleNavigate('berita-acara')
@@ -206,6 +248,8 @@ const MainLayout = () => {
           onNavigate={handleNavigate}
           isCollapsed={isSidebarCollapsed}
           setIsCollapsed={setIsSidebarCollapsed}
+          hasPendingApproval={hasPendingApproval}
+          pendingApprovalByGroup={pendingApprovalByGroup}
         />
         <main className={`flex-1 bg-gray-100 transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
           {renderPage()}

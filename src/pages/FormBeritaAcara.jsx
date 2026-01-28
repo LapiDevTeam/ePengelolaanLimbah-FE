@@ -49,8 +49,9 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   };
 
   const [form, setForm] = useState({
-    bagian: user?.emp_DeptID || user?.Bagian || user?.bagian || user?.department || user?.Department || "",
-    tanggal: getLocalDateISO(), // Current local date in YYYY-MM-DD format
+    bagian: "", // Single department (string) - one BAP must belong to exactly one bagian
+    startDate: getLocalDateISO(), // Start of date range in YYYY-MM-DD format
+    endDate: getLocalDateISO(), // End of date range in YYYY-MM-DD format
     jam: getLocalTimeHHMMSS(), // Current local time in HH:MM:SS format
     lokasiVerifikasi: "TPS",
     pelaksanaBagian: "",
@@ -108,7 +109,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
       
       setForm(prev => ({
         ...prev,
-        bagian: deptId
+        bagian: deptId // Single string, not array
       }));
     }
   }, [user]);
@@ -141,20 +142,26 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     return () => { mounted = false; };
   }, [user]);
 
-  // Reset daftar pemusnahan when bagian or tanggal changes
+  // Reset daftar pemusnahan when bagian or date range changes
   useEffect(() => {
     if (daftarGenerated) {
       setDaftarGenerated(false);
       setDaftarPemusnahan([]);
     }
-  }, [form.bagian, form.tanggal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.bagian, form.startDate, form.endDate]);
 
   // Add beforeunload event listener to warn about unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-      const hasFormData = Object.values(form).some(value => 
-        typeof value === 'string' && value.trim() !== '' && value !== user?.emp_DeptID
-      );
+      const userDeptId = user?.emp_DeptID ? String(user.emp_DeptID).toUpperCase() : '';
+      const hasFormData = Object.entries(form).some(([key, value]) => {
+        if (key === 'bagian') {
+          // Check if bagian differs from default (user's department)
+          return typeof value === 'string' && value !== '' && value !== userDeptId;
+        }
+        return typeof value === 'string' && value.trim() !== '' && value !== userDeptId;
+      });
       
       if (hasFormData || daftarPemusnahan.length > 0) {
         const message = "Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?";
@@ -176,17 +183,24 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   };
 
   const fetchDaftarPemusnahan = async () => {
-    if (!form.bagian || !form.tanggal) {
-      showWarning("Bagian dan tanggal harus diisi terlebih dahulu");
+    // Business Rule: One BAP must belong to exactly one bagian
+    if (!form.bagian || !form.startDate || !form.endDate) {
+      showWarning("Bagian dan periode selesai verifikasi lapangan harus diisi terlebih dahulu");
+      return;
+    }
+
+    if (new Date(form.startDate) > new Date(form.endDate)) {
+      showWarning("Tanggal 'Dari' tidak boleh lebih besar dari tanggal 'Sampai'");
       return;
     }
 
     setIsGenerating(true);
     try {
-      // Request server to return only requests for this bagian, tanggal, and group
+      // Request server to return only requests for this single bagian, date range, and group
       const response = await dataAPI.getAvailableRequestsForDailyLog({ 
-        bagian: form.bagian, 
-        tanggal: form.tanggal,
+        bagian: form.bagian, // Single string, not array
+        startDate: form.startDate,
+        endDate: form.endDate,
         group: group || undefined
       });
 
@@ -195,7 +209,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
         setDaftarGenerated(true);
 
         if ((response.data.data || []).length === 0) {
-          showInfo(`Tidak ada permohonan yang selesai untuk bagian ${form.bagian} pada tanggal ${form.tanggal}`);
+          showInfo(`Tidak ada permohonan yang selesai diverifikasi untuk bagian ${form.bagian} pada periode ${form.startDate} s/d ${form.endDate}`);
         }
       } else {
         setDaftarPemusnahan([]);
@@ -215,8 +229,9 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
 
   const resetForm = () => {
     setForm({
-      bagian: user?.emp_DeptID || user?.Bagian || user?.bagian || user?.department || user?.Department || "",
-      tanggal: getLocalDateISO(),
+      bagian: "", // Single department string
+      startDate: getLocalDateISO(),
+      endDate: getLocalDateISO(),
       jam: getLocalTimeHHMMSS(),
       lokasiVerifikasi: "TPS",
       pelaksanaBagian: "",
@@ -229,9 +244,13 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   };
 
   const handleCancel = async () => {
-    const hasFormData = Object.values(form).some(value => 
-      typeof value === 'string' && value.trim() !== '' && value !== user?.emp_DeptID
-    );
+    const userDeptId = user?.emp_DeptID ? String(user.emp_DeptID).toUpperCase() : '';
+    const hasFormData = Object.entries(form).some(([key, value]) => {
+      if (key === 'bagian') {
+        return typeof value === 'string' && value !== '' && value !== userDeptId;
+      }
+      return typeof value === 'string' && value.trim() !== '' && value !== userDeptId;
+    });
     
     if (hasFormData || daftarPemusnahan.length > 0) {
       const result = await showConfirmation(
@@ -252,9 +271,13 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   };
 
   const handleKembali = async () => {
-    const hasFormData = Object.values(form).some(value => 
-      typeof value === 'string' && value.trim() !== '' && value !== user?.emp_DeptID
-    );
+    const userDeptId = user?.emp_DeptID ? String(user.emp_DeptID).toUpperCase() : '';
+    const hasFormData = Object.entries(form).some(([key, value]) => {
+      if (key === 'bagian') {
+        return typeof value === 'string' && value !== '' && value !== userDeptId;
+      }
+      return typeof value === 'string' && value.trim() !== '' && value !== userDeptId;
+    });
     
     if (hasFormData || daftarPemusnahan.length > 0) {
       const result = await showConfirmation(
@@ -277,11 +300,12 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   const validateFormData = () => {
     const errors = [];
 
-    if (!form.bagian?.trim()) {
+    // Business Rule: One BAP must belong to exactly one bagian
+    if (!form.bagian || typeof form.bagian !== 'string' || form.bagian.trim() === '') {
       errors.push("Bagian harus diisi");
     }
-    if (!form.tanggal) {
-      errors.push("Tanggal harus diisi");
+    if (!form.startDate || !form.endDate) {
+      errors.push("Periode selesai verifikasi lapangan harus diisi");
     }
     if (!form.jam) {
       errors.push("Jam/Waktu harus diisi");
@@ -329,7 +353,8 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
       const buildLocalIso = () => {
         try {
           // Prefer centralized builder from util by combining date and time into a Date then generating Jakarta ISO
-          const [y, m, d] = (form.tanggal || '').split('-').map(Number);
+          // Use startDate as the BAP date (represents the beginning of the verification date range)
+          const [y, m, d] = (form.startDate || '').split('-').map(Number);
           const [hh, mm, ss] = (form.jam || '00:00:00').split(':').map(Number);
           const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, ss || 0);
           return toJakartaIsoFromLocal(dt);
@@ -338,13 +363,15 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
         }
       };
 
+      // NOTE: bagian and tanggal are NOT sent to backend.
+      // They are DERIVED from the selected requests:
+      //   - bagian: from the requests themselves (validated for single-bagian)
+      //   - tanggal: from ApprovalHistory.decision_date (latest verification completion)
+      // This ensures data integrity and prevents user from manipulating these values.
       const beritaAcaraData = {
-        bagian: form.bagian,
-        tanggal: form.tanggal, // Date field (YYYY-MM-DD local)
         waktu: buildLocalIso(), // send explicit Jakarta +07:00 ISO built from local inputs
         lokasi_verifikasi: form.lokasiVerifikasi,
-        // Remove manual input fields - these will be auto-filled from latest request's verification data
-        // Include selected request IDs to process only chosen rows
+        // Include selected request IDs - backend will derive bagian and tanggal from these
         selectedRequestIds: selectedRequestIds
       };
       
@@ -405,28 +432,49 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Bagian</label>
+                {/* Business Rule: One BAP must belong to exactly one bagian */}
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
                   name="bagian"
                   value={form.bagian}
                   onChange={handleFormChange}
                   disabled={departmentsLoading}
                 >
-                  <option value="">{departmentsLoading ? 'Loading...' : 'Pilih Bagian'}</option>
+                  <option value="">-- Pilih Bagian --</option>
                   {availableDepartments.map(dept => (
                     <option key={dept} value={dept}>{dept}</option>
                   ))}
                 </select>
+                <p className="mt-1 text-xs text-gray-500">Satu BAP hanya untuk satu bagian</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  name="tanggal"
-                  type="date"
-                  value={form.tanggal}
-                  onChange={handleFormChange}
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Periode Verifikasi Lapangan</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Dari</span>
+                  <input
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    name="startDate"
+                    type="date"
+                    value={form.startDate}
+                    onChange={handleFormChange}
+                    title="Tanggal awal periode selesai verifikasi lapangan"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Data ditampilkan berdasarkan tanggal selesai verifikasi lapangan</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Sampai</span>
+                  <input
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    name="endDate"
+                    type="date"
+                    value={form.endDate}
+                    onChange={handleFormChange}
+                    title="Tanggal akhir periode selesai verifikasi lapangan"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Jam/Waktu</label>
@@ -513,7 +561,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
                 <div className="p-4">
                   <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Informasi:</strong> Data secara otomatis terisi berdasarkan bagian dan tanggal pembuatan berita acara.
+                      <strong>Informasi:</strong> Data ditampilkan berdasarkan bagian dan periode <em>selesai</em> verifikasi lapangan yang dipilih.
                     </p>
                   </div>
 
@@ -522,7 +570,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
                     <button
                       type="button"
                       onClick={fetchDaftarPemusnahan}
-                      disabled={!form.bagian || !form.tanggal || isGenerating}
+                      disabled={!form.bagian || !form.startDate || !form.endDate || isGenerating}
                       className="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isGenerating ? (
@@ -534,9 +582,9 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
                         "Generate Daftar Pemusnahan"
                       )}
                     </button>
-                    {(!form.bagian || !form.tanggal) && (
+                    {(!form.bagian || !form.startDate || !form.endDate) && (
                       <p className="mt-2 text-sm text-gray-500">
-                        Pilih bagian dan tanggal terlebih dahulu untuk generate daftar pemusnahan.
+                        Pilih bagian dan periode selesai verifikasi lapangan terlebih dahulu untuk generate daftar pemusnahan.
                       </p>
                     )}
                   </div>

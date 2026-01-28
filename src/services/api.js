@@ -738,9 +738,21 @@ export const dataAPI = {
   // Get available requests for daily log generation
   getAvailableRequestsForDailyLog: async (params = {}) => {
     try {
-      // params: { bagian, tanggal, group }
+      // params: { bagian (string|array), tanggal, startDate, endDate, group }
       const query = new URLSearchParams();
-      if (params.bagian) query.append('bagian', params.bagian);
+      
+      // Handle bagian as string or array
+      if (params.bagian) {
+        if (Array.isArray(params.bagian)) {
+          params.bagian.forEach(b => query.append('bagian', b));
+        } else {
+          query.append('bagian', params.bagian);
+        }
+      }
+      
+      // Support date range (startDate/endDate) or single date (tanggal) for backward compatibility
+      if (params.startDate) query.append('startDate', params.startDate);
+      if (params.endDate) query.append('endDate', params.endDate);
       if (params.tanggal) query.append('tanggal', params.tanggal);
       if (params.group) query.append('group', params.group);
 

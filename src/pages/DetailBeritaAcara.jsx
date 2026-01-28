@@ -780,83 +780,88 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Daftar Pemusnahan</h3>
 
-          <div className="flex gap-6">
-            {/* Table Section */}
-            <div className="flex-1">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-green-600">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                        No. Permohonan
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                        Bentuk Limbah
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                        Golongan Limbah
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                        Jenis Limbah
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                        Jumlah Item
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                        Bobot Total (gram)
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                        Alasan Pemusnahan
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {data.daftarPemusnahan.map((item, index) => (
-                      <tr key={item.request_id || index} className="hover:bg-gray-50">
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.noPermohonan}</td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.bentukLimbah}</td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.golonganLimbah}</td>
-                        <td className="px-4 py-4 text-sm text-gray-900">{item.jenisLimbah}</td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.jumlahItem}</td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.bobotTotal}</td>
-                        <td className="px-4 py-4 text-sm text-gray-900">{item.alasanPemusnahan}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Action Buttons Section */}
-            <div className="w-80 flex-shrink-0">
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="space-y-3">
-                  {data.daftarPemusnahan.map((item, index) => (
-                    <div key={item.request_id || index} className="bg-white rounded-md border border-gray-200 p-3">
-                      <div className="text-xs font-medium text-gray-600 mb-2">{item.noPermohonan}</div>
-                      <div className="flex flex-col gap-2">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-green-600">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    No. Permohonan
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Bentuk Limbah
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Golongan Limbah
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Jenis Limbah
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Jumlah Item
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Bobot Total (gram)
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                    Alasan Pemusnahan
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {data.daftarPemusnahan.map((item, index) => (
+                  <tr key={item.request_id || index} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.noPermohonan}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.bentukLimbah}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.golonganLimbah}</td>
+                    <td className="px-4 py-4 text-sm text-gray-900">{item.jenisLimbah}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.jumlahItem}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.bobotTotal}</td>
+                    <td className="px-4 py-4 text-sm text-gray-900">{item.alasanPemusnahan}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleDownloadExcel(item.request_id)}
-                          className="w-full px-3 py-2 bg-green-600 text-white text-xs rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                          className="p-2 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={excelLoadingStates[item.request_id]}
                           title="Download Lampiran Excel"
                         >
-                          {excelLoadingStates[item.request_id] ? "Loading..." : "Download Lampiran"}
+                          {excelLoadingStates[item.request_id] ? (
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          )}
                         </button>
                         <button
                           onClick={() => handleGeneratePermohonanPDF(item.request_id)}
-                          className="w-full px-3 py-2 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+                          className="p-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={permohonanLoadingStates[item.request_id]}
                           title="Generate Form Permohonan PDF"
                         >
-                          {permohonanLoadingStates[item.request_id] ? "Generating..." : "Generate Form Permohonan"}
+                          {permohonanLoadingStates[item.request_id] ? (
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          )}
                         </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 

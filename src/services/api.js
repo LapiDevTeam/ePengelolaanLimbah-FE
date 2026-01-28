@@ -738,10 +738,11 @@ export const dataAPI = {
   // Get available requests for daily log generation
   getAvailableRequestsForDailyLog: async (params = {}) => {
     try {
-      // params: { bagian, tanggal }
+      // params: { bagian, tanggal, group }
       const query = new URLSearchParams();
       if (params.bagian) query.append('bagian', params.bagian);
       if (params.tanggal) query.append('tanggal', params.tanggal);
+      if (params.group) query.append('group', params.group);
 
       const url = '/berita-acara/available-requests' + (query.toString() ? `?${query.toString()}` : '');
       const response = await api.get(url);

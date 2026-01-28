@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { dataAPI } from "../services/api";
 import { showInfo } from "../utils/sweetAlert";
 
-const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGroup }) => {
+const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGroup, group }) => {
   const { user } = useAuth();
   const [isCreatorAllowed, setIsCreatorAllowed] = useState(false);
   const [creatorCheckLoading, setCreatorCheckLoading] = useState(true);
@@ -38,9 +38,9 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
   }, [user]);
 
   const handleAddBeritaAcara = () => {
-    // Navigate to form page when implemented
+    // Navigate to form page with group context
     if (onNavigate) {
-      onNavigate("tambah-berita-acara");
+      onNavigate("tambah-berita-acara", { group });
     } else {
       showInfo("Add berita acara functionality will be implemented here");
     }

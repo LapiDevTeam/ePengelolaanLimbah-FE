@@ -31,7 +31,7 @@ function formatTime24Hour(timeStr) {
   return f || String(timeStr);
 }
 
-const FormBeritaAcara = ({ onNavigate }) => {
+const FormBeritaAcara = ({ onNavigate, group }) => {
   const { user } = useAuth();
 
   const getLocalDateISO = () => {
@@ -183,8 +183,12 @@ const FormBeritaAcara = ({ onNavigate }) => {
 
     setIsGenerating(true);
     try {
-      // Request server to return only requests for this bagian and tanggal
-      const response = await dataAPI.getAvailableRequestsForDailyLog({ bagian: form.bagian, tanggal: form.tanggal });
+      // Request server to return only requests for this bagian, tanggal, and group
+      const response = await dataAPI.getAvailableRequestsForDailyLog({ 
+        bagian: form.bagian, 
+        tanggal: form.tanggal,
+        group: group || undefined
+      });
 
       if (response.data.success) {
         setDaftarPemusnahan(response.data.data || []);

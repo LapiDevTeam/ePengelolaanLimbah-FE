@@ -198,7 +198,7 @@ const MainLayout = () => {
       case "pending-approvals":
         return <PendingApprovals onNavigate={handleNavigate} />
       case "berita-acara":
-        return <BeritaAcara onNavigate={handleNavigate} onPendingApprovalChange={setHasPendingApproval} pendingApprovalByGroup={pendingApprovalByGroup} />
+        return <BeritaAcara onNavigate={handleNavigate} onPendingApprovalChange={setHasPendingApproval} pendingApprovalByGroup={pendingApprovalByGroup} group={pageData?.group} />
       case "detail-berita-acara":
         if (!pageData?.id) {
           handleNavigate('berita-acara')
@@ -206,7 +206,7 @@ const MainLayout = () => {
         }
         return <DetailBeritaAcara onNavigate={handleNavigate} beritaAcaraId={pageData?.id} navigationData={pageData} />
       case "tambah-berita-acara":
-        return <FormBeritaAcara onNavigate={handleNavigate} />
+        return <FormBeritaAcara onNavigate={handleNavigate} group={pageData?.group} />
       case "test-label":
         return <TestLabelPage onNavigate={handleNavigate} />
       case "notifications":

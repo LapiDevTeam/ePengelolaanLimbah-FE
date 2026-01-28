@@ -17,7 +17,7 @@ import { showSuccess, showError, showConfirmation } from "../utils/sweetAlert";
 
 // Use centralized Jakarta formatters so displayed timestamps match stored Jakarta wall-clock
 
-const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
+const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) => {
   const { user } = useAuth();
   const { getStatusStyle } = useConfigContext();
   const [data, setData] = useState(null);
@@ -398,7 +398,17 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId }) => {
 
   const handleBack = () => {
     if (onNavigate) {
-      onNavigate("berita-acara");
+      // Use navigation context if available, otherwise fallback to default
+      const fromContext = navigationData?.from;
+      if (fromContext && fromContext.page) {
+        onNavigate(fromContext.page, {
+          pageAlias: fromContext.pageAlias,
+          group: fromContext.group,
+          pageNumber: fromContext.pageNumber
+        });
+      } else {
+        onNavigate("berita-acara");
+      }
     }
   };
 

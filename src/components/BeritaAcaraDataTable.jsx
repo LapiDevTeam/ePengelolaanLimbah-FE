@@ -160,7 +160,15 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
 
   const handleView = async (id) => {
     if (onNavigate) {
-      onNavigate('detail-berita-acara', { id: id });
+      // Build navigation context for Back button
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromContext = {
+        page: 'berita-acara',
+        pageAlias: groupFilter ? `berita-acara-${groupFilter === 'limbah-b3' ? 'b3' : groupFilter === 'recall-precursor' ? 'recall-precursor-oot' : groupFilter}` : 'berita-acara-b3',
+        group: groupFilter,
+        pageNumber: currentPage
+      };
+      onNavigate('detail-berita-acara', { id: id, from: fromContext });
     } else {
       showInfo("View berita acara functionality will be implemented here");
     }

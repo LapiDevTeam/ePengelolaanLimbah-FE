@@ -292,7 +292,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         {/* My Requests Card - Always visible */}
         <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
           <button
-            onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests' })}
+            onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests', pageAlias: 'daftar-ajuan-b3' })}
             className="w-full text-left"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">My Requests</h3>
@@ -310,7 +310,10 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
           {!isLoadingStats && (
             <GroupBreakdown 
               groupCounts={statsByGroup.myRequests}
-              onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests', group, pageAlias: `daftar-ajuan-${group}` })}
+              onGroupClick={(group) => {
+                const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
+                onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests', group, pageAlias: aliasMap[group] || 'daftar-ajuan' })
+              }}
             />
           )}
         </div>
@@ -319,7 +322,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         {hasApprovalAuthority && (
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals' })}
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals', pageAlias: 'daftar-ajuan-b3' })}
               className="w-full text-left"
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Pending Approvals</h3>
@@ -337,7 +340,10 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
             {!isLoadingStats && (
               <GroupBreakdown 
                 groupCounts={statsByGroup.pendingApprovals}
-                onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals', group, pageAlias: `daftar-ajuan-${group}` })}
+                onGroupClick={(group) => {
+                  const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
+                  onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals', group, pageAlias: aliasMap[group] || 'daftar-ajuan' })
+                }}
               />
             )}
           </div>
@@ -346,7 +352,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         {hasApprovalAuthority && (
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved' })}
+              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved', pageAlias: 'daftar-ajuan-b3' })}
               className="w-full text-left"
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Approved</h3>
@@ -364,7 +370,10 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
             {!isLoadingStats && (
               <GroupBreakdown 
                 groupCounts={statsByGroup.approved}
-                onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved', group, pageAlias: `daftar-ajuan-${group}` })}
+                onGroupClick={(group) => {
+                  const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
+                  onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved', group, pageAlias: aliasMap[group] || 'daftar-ajuan' })
+                }}
               />
             )}
           </div>
@@ -424,7 +433,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
           <>
             <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
               <button
-                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification' })}
+                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification', pageAlias: 'daftar-ajuan-b3' })}
                 className="w-full text-left"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Verifikasi Lapangan</h3>
@@ -442,14 +451,17 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               {!isLoadingStats && (
                 <GroupBreakdown 
                   groupCounts={statsByGroup.verifikasiLapangan}
-                  onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification', group, pageAlias: `daftar-ajuan-${group}` })}
+                  onGroupClick={(group) => {
+                    const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
+                    onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification', group, pageAlias: aliasMap[group] || 'daftar-ajuan' })
+                  }}
                 />
               )}
             </div>
 
             <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
               <button
-                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager' })}
+                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager', pageAlias: 'daftar-ajuan-b3' })}
                 className="w-full text-left"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Waiting HSE Manager</h3>
@@ -467,14 +479,17 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               {!isLoadingStats && (
                 <GroupBreakdown 
                   groupCounts={statsByGroup.waitingHseManager}
-                  onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager', group, pageAlias: `daftar-ajuan-${group}` })}
+                  onGroupClick={(group) => {
+                    const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
+                    onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager', group, pageAlias: aliasMap[group] || 'daftar-ajuan' })
+                  }}
                 />
               )}
             </div>
 
             <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
               <button
-                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected' })}
+                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected', pageAlias: 'daftar-ajuan-b3' })}
                 className="w-full text-left"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Rejected (KL)</h3>
@@ -492,7 +507,10 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               {!isLoadingStats && (
                 <GroupBreakdown 
                   groupCounts={statsByGroup.rejectedKL}
-                  onGroupClick={(group) => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected', group, pageAlias: `daftar-ajuan-${group}` })}
+                  onGroupClick={(group) => {
+                    const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
+                    onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected', group, pageAlias: aliasMap[group] || 'daftar-ajuan' })
+                  }}
                 />
               )}
             </div>

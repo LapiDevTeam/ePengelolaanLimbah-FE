@@ -183,7 +183,18 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
 
   const handleBack = () => {
     if (onNavigate) {
-      onNavigate("daftar-ajuan");
+      // Use navigation context if available, otherwise fallback to default
+      const fromContext = navigationData?.from;
+      if (fromContext && fromContext.page) {
+        onNavigate(fromContext.page, {
+          pageAlias: fromContext.pageAlias,
+          viewMode: fromContext.viewMode,
+          group: fromContext.group,
+          pageNumber: fromContext.pageNumber
+        });
+      } else {
+        onNavigate("daftar-ajuan");
+      }
     }
   };
 

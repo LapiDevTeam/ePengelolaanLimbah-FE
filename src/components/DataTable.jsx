@@ -612,7 +612,19 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
                     <div className="flex items-center gap-2">
                       <button
                         className="px-3 py-1 text-xs bg-sky-100 text-sky-700 rounded hover:bg-sky-200 transition-colors"
-                        onClick={() => onNavigate && onNavigate('detail-ajuan', { id: item.id, fromView: viewMode })}
+                        onClick={() => {
+                          if (onNavigate) {
+                            // Build navigation context for Back button
+                            const fromContext = {
+                              page: 'daftar-ajuan',
+                              pageAlias: groupFilter ? `daftar-ajuan-${groupFilter === 'limbah-b3' ? 'b3' : groupFilter === 'recall-precursor' ? 'recall-precursor-oot' : groupFilter}` : 'daftar-ajuan-b3',
+                              viewMode: viewMode,
+                              group: groupFilter,
+                              pageNumber: currentPage
+                            };
+                            onNavigate('detail-ajuan', { id: item.id, fromView: viewMode, from: fromContext });
+                          }
+                        }}
                         title="View Details"
                       >
                         View

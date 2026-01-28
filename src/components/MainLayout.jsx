@@ -204,7 +204,7 @@ const MainLayout = () => {
           handleNavigate('berita-acara')
           return null
         }
-        return <DetailBeritaAcara onNavigate={handleNavigate} beritaAcaraId={pageData?.id} />
+        return <DetailBeritaAcara onNavigate={handleNavigate} beritaAcaraId={pageData?.id} navigationData={pageData} />
       case "tambah-berita-acara":
         return <FormBeritaAcara onNavigate={handleNavigate} />
       case "test-label":

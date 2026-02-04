@@ -61,7 +61,7 @@ export const dataAPI = {
   // Get all destruction requests with pagination and filtering
   getDestructionRequests: async (params = {}) => {
     try {
-      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', userOnly = true, statusFilter = '', group = null } = params;
+      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', userOnly = true, statusFilter = '', group = null, excludeCompleted = false } = params;
       
       // Build query params
       const queryParams = new URLSearchParams({
@@ -80,6 +80,10 @@ export const dataAPI = {
       // Add userOnly filter for regular users to see only their own requests
       if (userOnly) {
         queryParams.append('userOnly', 'true');
+        // Exclude completed requests for My Requests tab
+        if (excludeCompleted) {
+          queryParams.append('excludeCompleted', 'true');
+        }
       }
 
       // Add status filter (for KL filtering by specific status)
@@ -106,11 +110,16 @@ export const dataAPI = {
               golongan_limbah_id: item.golongan_limbah_id,
               jenis_limbah_b3_id: item.jenis_limbah_b3_id,
               status: item.status || 'Draft',
-              currentStepLevel: item.CurrentStep?.step_level || null,
+              currentStepLevel: item.CurrentStep?.step_level || item.currentStepInfo?.stepLevel || null,
+              currentStepName: item.CurrentStep?.step_name || item.currentStepInfo?.stepName || null,
               requesterName: item.requester_name,
               bagian: item.bagian,
               bentukLimbah: item.bentuk_limbah,
-              alasanPenolakan: item.alasan_penolakan
+              alasanPenolakan: item.alasan_penolakan,
+              // New fields from enhanced API response
+              golonganGroup: item.golonganGroup || null,
+              isPendingForCurrentUser: item.isPendingForCurrentUser || false,
+              canCurrentUserApprove: item.canCurrentUserApprove || false
             })),
             pagination: response.data.pagination
           }
@@ -1616,11 +1625,16 @@ export const dataAPI = {
               golongan_limbah_id: item.golongan_limbah_id,
               jenis_limbah_b3_id: item.jenis_limbah_b3_id,
               status: item.status || 'Draft',
-              currentStepLevel: item.CurrentStep?.step_level || null,
+              currentStepLevel: item.CurrentStep?.step_level || item.currentStepInfo?.stepLevel || null,
+              currentStepName: item.CurrentStep?.step_name || item.currentStepInfo?.stepName || null,
               requesterName: item.requester_name,
               bagian: item.bagian,
               bentukLimbah: item.bentuk_limbah,
-              alasanPenolakan: item.alasan_penolakan
+              alasanPenolakan: item.alasan_penolakan,
+              // New fields from enhanced API response
+              golonganGroup: item.golonganGroup || null,
+              isPendingForCurrentUser: item.isPendingForCurrentUser || false,
+              canCurrentUserApprove: item.canCurrentUserApprove || false
             })),
             pagination: response.data.pagination
           }
@@ -1671,11 +1685,16 @@ export const dataAPI = {
               golongan_limbah_id: item.golongan_limbah_id,
               jenis_limbah_b3_id: item.jenis_limbah_b3_id,
               status: item.status || 'Draft',
-              currentStepLevel: item.CurrentStep?.step_level || null,
+              currentStepLevel: item.CurrentStep?.step_level || item.currentStepInfo?.stepLevel || null,
+              currentStepName: item.CurrentStep?.step_name || item.currentStepInfo?.stepName || null,
               requesterName: item.requester_name,
               bagian: item.bagian,
               bentukLimbah: item.bentuk_limbah,
-              alasanPenolakan: item.alasan_penolakan
+              alasanPenolakan: item.alasan_penolakan,
+              // New fields from enhanced API response
+              golonganGroup: item.golonganGroup || null,
+              isPendingForCurrentUser: item.isPendingForCurrentUser || false,
+              canCurrentUserApprove: item.canCurrentUserApprove || false
             })),
             pagination: response.data.pagination
           }
@@ -1715,11 +1734,16 @@ export const dataAPI = {
               golongan_limbah_id: item.golongan_limbah_id,
               jenis_limbah_b3_id: item.jenis_limbah_b3_id,
               status: item.status || 'Draft',
-              currentStepLevel: item.CurrentStep?.step_level || null,
+              currentStepLevel: item.CurrentStep?.step_level || item.currentStepInfo?.stepLevel || null,
+              currentStepName: item.CurrentStep?.step_name || item.currentStepInfo?.stepName || null,
               requesterName: item.requester_name,
               bagian: item.bagian,
               bentukLimbah: item.bentuk_limbah,
-              alasanPenolakan: item.alasan_penolakan
+              alasanPenolakan: item.alasan_penolakan,
+              // New fields from enhanced API response
+              golonganGroup: item.golonganGroup || null,
+              isPendingForCurrentUser: item.isPendingForCurrentUser || false,
+              canCurrentUserApprove: item.canCurrentUserApprove || false
             })),
             pagination: response.data.pagination
           }

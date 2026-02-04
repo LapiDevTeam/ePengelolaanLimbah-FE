@@ -134,7 +134,7 @@ const Sidebar = ({ currentPage, onNavigate, isCollapsed, setIsCollapsed, hasPend
     },
     {
       id: "recall-precursor-oot",
-      label: "Recall (Precursor & OOT)",
+      label: "Precursor & OOT",
       icon: <FileIcon />,
       hasSubmenu: true,
       isExpanded: isRecallPrecursorExpanded,

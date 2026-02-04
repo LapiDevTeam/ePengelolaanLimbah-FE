@@ -169,13 +169,14 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             group: groupFilter
           });
         } else {
-          // Fetch user's own requests (default behavior)
+          // Fetch user's own requests (default behavior) - exclude completed for My Requests
           response = await dataAPI.getDestructionRequests({
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
             userOnly: true,
+            excludeCompleted: true,  // Exclude completed requests in My Requests tab
             group: groupFilter
           });
         }

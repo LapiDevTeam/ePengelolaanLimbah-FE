@@ -38,92 +38,46 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         const result = await api.getDashboardStats()
         if (result.data.success) {
           const backendStats = result.data.data || {}
-          setStats(backendStats)
-
-          // Fallback: if backend didn't provide specific counts, fetch minimal counts
-          const needsFallback = typeof backendStats.myRequests !== 'number' ||
-                                typeof backendStats.pendingApprovals !== 'number' ||
-                                typeof backendStats.approved !== 'number' ||
-                                typeof backendStats.waitingHseManager !== 'number' ||
-                                typeof backendStats.verifikasiLapangan !== 'number' ||
-                                typeof backendStats.rejectedKL !== 'number'
-
-          if (needsFallback) {
-            try {
-              const groups = ['limbah-b3', 'recall', 'recall-precursor']
-              
-              // Fetch counts by group for each status
-              const groupResults = await Promise.all(
-                groups.map(async (group) => {
-                  const [myReq, pending, approved, verifikasi, waitingHse, rejected] = await Promise.all([
-                    api.getDestructionRequests({ page: 1, limit: 1, userOnly: true, group }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                    api.getPendingApprovals({ page: 1, limit: 1, group }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                    api.getProcessedByUser({ page: 1, limit: 1, group }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                    api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'Verification', group }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                    api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'WaitingHSEManager', group }).catch(() => ({ data: { pagination: { total: 0 } } })),
-                    api.getDestructionRequests({ page: 1, limit: 1, userOnly: false, statusFilter: 'Rejected', group }).catch(() => ({ data: { pagination: { total: 0 } } }))
-                  ])
-                  
-                  return {
-                    group,
-                    myRequests: myReq.data?.pagination?.total || 0,
-                    pendingApprovals: pending.data?.pagination?.total || 0,
-                    approved: approved.data?.pagination?.total || 0,
-                    verifikasiLapangan: verifikasi.data?.pagination?.total || 0,
-                    waitingHseManager: waitingHse.data?.pagination?.total || 0,
-                    rejectedKL: rejected.data?.pagination?.total || 0
-                  }
-                })
-              )
-              
-              // Aggregate group results
-              const groupStats = {
-                myRequests: {},
-                pendingApprovals: {},
-                approved: {},
-                waitingHseManager: {},
-                verifikasiLapangan: {},
-                rejectedKL: {}
-              }
-              
-              let totals = {
-                myRequests: 0,
-                pendingApprovals: 0,
-                approved: 0,
-                waitingHseManager: 0,
-                verifikasiLapangan: 0,
-                rejectedKL: 0
-              }
-              
-              groupResults.forEach(result => {
-                groupStats.myRequests[result.group] = result.myRequests
-                groupStats.pendingApprovals[result.group] = result.pendingApprovals
-                groupStats.approved[result.group] = result.approved
-                groupStats.waitingHseManager[result.group] = result.waitingHseManager
-                groupStats.verifikasiLapangan[result.group] = result.verifikasiLapangan
-                groupStats.rejectedKL[result.group] = result.rejectedKL
-                
-                totals.myRequests += result.myRequests
-                totals.pendingApprovals += result.pendingApprovals
-                totals.approved += result.approved
-                totals.waitingHseManager += result.waitingHseManager
-                totals.verifikasiLapangan += result.verifikasiLapangan
-                totals.rejectedKL += result.rejectedKL
-              })
-              
-              setStatsByGroup(groupStats)
-              setStats(prev => ({
-                myRequests: typeof prev.myRequests === 'number' ? prev.myRequests : totals.myRequests,
-                pendingApprovals: typeof prev.pendingApprovals === 'number' ? prev.pendingApprovals : totals.pendingApprovals,
-                approved: typeof prev.approved === 'number' ? prev.approved : totals.approved,
-                waitingHseManager: typeof prev.waitingHseManager === 'number' ? prev.waitingHseManager : totals.waitingHseManager,
-                verifikasiLapangan: typeof prev.verifikasiLapangan === 'number' ? prev.verifikasiLapangan : totals.verifikasiLapangan,
-                rejectedKL: typeof prev.rejectedKL === 'number' ? prev.rejectedKL : totals.rejectedKL
-              }))
-            } catch (fallbackError) {
-              console.error('Error fetching fallback counts:', fallbackError)
-            }
-          }
+          
+          // Handle new format from backend (with byGroup nested structure)
+          const myRequestsTotal = typeof backendStats.myRequests === 'object' 
+            ? backendStats.myRequests.total 
+            : (backendStats.myRequestsCount || backendStats.myRequests || 0)
+          const pendingApprovalsTotal = typeof backendStats.pendingApprovals === 'object'
+            ? backendStats.pendingApprovals.total
+            : (backendStats.pendingApprovalsCount || backendStats.pendingApprovals || 0)
+          const approvedTotal = typeof backendStats.approved === 'object'
+            ? backendStats.approved.total
+            : (backendStats.approvedCount || backendStats.approved || 0)
+          
+          setStats({
+            myRequests: myRequestsTotal,
+            pendingApprovals: pendingApprovalsTotal,
+            approved: approvedTotal,
+            waitingHseManager: backendStats.waitingHseManager || 0,
+            verifikasiLapangan: backendStats.verifikasiLapangan || 0,
+            rejectedKL: backendStats.rejectedKL || 0
+          })
+          
+          // Extract group breakdowns from backend response
+          const myRequestsByGroup = typeof backendStats.myRequests === 'object' 
+            ? backendStats.myRequests.byGroup 
+            : { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 }
+          const pendingApprovalsByGroup = typeof backendStats.pendingApprovals === 'object'
+            ? backendStats.pendingApprovals.byGroup
+            : { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 }
+          const approvedByGroup = typeof backendStats.approved === 'object'
+            ? backendStats.approved.byGroup
+            : { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 }
+          
+          setStatsByGroup({
+            myRequests: myRequestsByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+            pendingApprovals: pendingApprovalsByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+            approved: approvedByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+            waitingHseManager: backendStats.waitingHseManagerByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+            verifikasiLapangan: backendStats.verifikasiLapanganByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+            rejectedKL: backendStats.rejectedKLByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 }
+          })
         } else {
           console.error('Failed to fetch stats:', result.data.message)
         }

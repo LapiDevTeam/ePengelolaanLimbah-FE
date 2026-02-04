@@ -51,7 +51,7 @@ const formatTimestamp = (timestamp) => {
   return formatted || String(timestamp);
 };
 
-const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
+const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange, initialTab = "all" }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedColumn, setSelectedColumn] = useState("no_bap");
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,7 +60,7 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openPermohonanIdx, setOpenPermohonanIdx] = useState(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const itemsPerPage = 8;
   const { user } = useAuth();
   const { getStatusStyle } = useConfigContext();
@@ -72,15 +72,25 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
   // Check if user has approval authority for Berita Acara (includes PL for Head of Plant)
   const hasApprovalAuthority = user?.role && ["Manager", "HSE", "APJ", "QA", "PL"].includes(user.role);
 
+  // Reset to page 1 when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
   useEffect(() => {
     const fetchBeritaAcara = async () => {
       try {
         setLoading(true);
         setError(null);
-        // If filtering by permohonan number, fetch a larger set so we can filter client-side
-        const limitParam = (selectedColumn === 'permohonan' && searchTerm) ? 1000 : itemsPerPage;
+        
+        // Determine if we need to fetch all data for client-side filtering
+        const needsClientSideFilter = (selectedColumn === 'permohonan' && searchTerm) || activeTab === 'pending-approval';
+        const limitParam = needsClientSideFilter ? 1000 : itemsPerPage;
+        // For pending-approval, always fetch page 1 since we paginate client-side
+        const pageParam = needsClientSideFilter ? 1 : currentPage;
+        
         const response = await dataAPI.getBeritaAcara({
-          page: currentPage,
+          page: pageParam,
           limit: limitParam,
           searchTerm: searchTerm,
           selectedColumn: selectedColumn,
@@ -89,23 +99,33 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
         
         if (response.data.success) {
           // Keep backend field names; API already added `id`.
-          const transformedData = response.data.data.map(item => ({ ...item }));
+          let transformedData = response.data.data.map(item => ({ ...item }));
+          let totalCount = response.data.pagination.total;
+
+          // Filter for pending-approval tab first
+          if (activeTab === 'pending-approval') {
+            transformedData = transformedData.filter(item => item.can_sign === true && item.status !== 'Completed');
+            totalCount = transformedData.length;
+          }
 
           // If filtering by permohonan, perform client-side search on `permohonanNumbers`
           if (selectedColumn === 'permohonan' && searchTerm) {
             const searchLower = String(searchTerm).trim().toLowerCase();
-            const filteredAll = transformedData.filter(item => {
+            transformedData = transformedData.filter(item => {
               const numbers = Array.isArray(item.permohonanNumbers)
                 ? item.permohonanNumbers
                 : (item.permohonanNumber ? [item.permohonanNumber] : []);
               return numbers.some(n => String(n || '').toLowerCase().includes(searchLower));
             });
+            totalCount = transformedData.length;
+          }
 
-            // Paginate client-side result
+          // Paginate client-side if needed
+          if (needsClientSideFilter) {
             const start = (currentPage - 1) * itemsPerPage;
-            const pageSlice = filteredAll.slice(start, start + itemsPerPage);
+            const pageSlice = transformedData.slice(start, start + itemsPerPage);
             setData(pageSlice);
-            setTotalItems(filteredAll.length);
+            setTotalItems(totalCount);
           } else {
             setData(transformedData);
             setTotalItems(response.data.pagination.total);
@@ -113,7 +133,9 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
 
           // Notify parent of pending approval state
           if (onPendingApprovalChange) {
-            const hasPendingApproval = transformedData.some(row => row.can_sign === true);
+            // When on pending tab, use filtered count; otherwise check original data
+            const allData = response.data.data || [];
+            const hasPendingApproval = allData.some(row => row.can_sign === true);
             onPendingApprovalChange(hasPendingApproval);
           }
         } else {
@@ -131,7 +153,8 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
     };
 
     fetchBeritaAcara();
-  }, [currentPage, searchTerm, selectedColumn, groupFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, searchTerm, selectedColumn, groupFilter, activeTab]);
 
   // Define column mappings based on backend BeritaAcara model
   const columnOptions = [
@@ -188,10 +211,8 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange }) => {
   }
 
   const getFilteredData = () => {
-    if (activeTab === "all") return data;
-    if (activeTab === "pending-approval") {
-      return data.filter((row) => row.can_sign === true && row.status !== "Completed");
-    }
+    // Filtering is now handled during fetch in useEffect
+    // Data returned is already filtered based on activeTab
     return data;
   };
 

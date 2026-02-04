@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { dataAPI } from "../services/api";
 import { showInfo } from "../utils/sweetAlert";
 
-const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGroup, group }) => {
+const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGroup, group, viewMode }) => {
   const { user } = useAuth();
   const [isCreatorAllowed, setIsCreatorAllowed] = useState(false);
   const [creatorCheckLoading, setCreatorCheckLoading] = useState(true);
@@ -71,7 +71,7 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
         </div>
       </div>
 
-      <BeritaAcaraDataTable onNavigate={onNavigate} onPendingApprovalChange={onPendingApprovalChange} pendingApprovalByGroup={pendingApprovalByGroup} />
+      <BeritaAcaraDataTable onNavigate={onNavigate} onPendingApprovalChange={onPendingApprovalChange} pendingApprovalByGroup={pendingApprovalByGroup} initialTab={viewMode === 'pending-approval' ? 'pending-approval' : 'all'} />
     </div>
   );
 };

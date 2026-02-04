@@ -244,11 +244,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* My Requests Card - Always visible */}
-        <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-          <button
-            onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'my-requests', pageAlias: 'daftar-ajuan-b3' })}
-            className="w-full text-left"
-          >
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="mb-2">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">My Requests</h3>
             {isLoadingStats ? (
               <div className="flex items-center justify-center h-12">
@@ -260,7 +257,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
             ) : (
               <p className="text-3xl font-bold text-green-600">{stats.myRequests}</p>
             )}
-          </button>
+          </div>
           {!isLoadingStats && (
             <GroupBreakdown 
               groupCounts={statsByGroup.myRequests}
@@ -274,11 +271,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
 
         {/* Pending Approvals Card - Only visible for users with approval authority */}
         {hasApprovalAuthority && (
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-            <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'pending-approvals', pageAlias: 'daftar-ajuan-b3' })}
-              className="w-full text-left"
-            >
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="mb-2">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Pending Approvals</h3>
               {isLoadingStats ? (
                 <div className="flex items-center justify-center h-12">
@@ -290,7 +284,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               ) : (
                 <p className="text-3xl font-bold text-yellow-600">{stats.pendingApprovals}</p>
               )}
-            </button>
+            </div>
             {!isLoadingStats && (
               <GroupBreakdown 
                 groupCounts={statsByGroup.pendingApprovals}
@@ -304,11 +298,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         )}
         {/* Approved Card - Only visible for users with approval authority */}
         {hasApprovalAuthority && (
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-            <button
-              onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved', pageAlias: 'daftar-ajuan-b3' })}
-              className="w-full text-left"
-            >
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="mb-2">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Approved</h3>
               {isLoadingStats ? (
                 <div className="flex items-center justify-center h-12">
@@ -320,7 +311,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               ) : (
                 <p className="text-3xl font-bold text-blue-600">{stats.approved}</p>
               )}
-            </button>
+            </div>
             {!isLoadingStats && (
               <GroupBreakdown 
                 groupCounts={statsByGroup.approved}
@@ -339,19 +330,16 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
           if (totalPending === 0) return null
           
           return (
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-              <button
-                onClick={() => onNavigate && onNavigate('berita-acara')}
-                className="w-full text-left"
-              >
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-2">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Berita Acara - Pending Approval</h3>
-                <p className="text-3xl font-bold text-orange-600 mb-4">{totalPending}</p>
-              </button>
+                <p className="text-3xl font-bold text-orange-600">{totalPending}</p>
+              </div>
               {totalPending > 0 && (
                 <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
                   {pendingApprovalByGroup['limbah-b3'] > 0 && (
                     <button
-                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'limbah-b3', pageAlias: 'berita-acara-b3' })}
+                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'limbah-b3', pageAlias: 'berita-acara-b3', viewMode: 'pending-approval' })}
                       className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded px-2 py-1 transition-colors"
                     >
                       <span>Limbah B3</span>
@@ -360,7 +348,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
                   )}
                   {pendingApprovalByGroup['recall'] > 0 && (
                     <button
-                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'recall', pageAlias: 'berita-acara-recall' })}
+                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'recall', pageAlias: 'berita-acara-recall', viewMode: 'pending-approval' })}
                       className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded px-2 py-1 transition-colors"
                     >
                       <span>Recall</span>
@@ -369,7 +357,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
                   )}
                   {pendingApprovalByGroup['recall-precursor'] > 0 && (
                     <button
-                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'recall-precursor', pageAlias: 'berita-acara-recall-precursor-oot' })}
+                      onClick={() => onNavigate && onNavigate('berita-acara', { group: 'recall-precursor', pageAlias: 'berita-acara-recall-precursor-oot', viewMode: 'pending-approval' })}
                       className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded px-2 py-1 transition-colors"
                     >
                       <span>Recall (Precursor & OOT)</span>
@@ -385,11 +373,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         {/* KL-specific status cards for KL users who are not approvers (officer view) */}
         {isFromKL && !hasApprovalAuthority && (
           <>
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-              <button
-                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification', pageAlias: 'daftar-ajuan-b3' })}
-                className="w-full text-left"
-              >
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-2">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Verifikasi Lapangan</h3>
                 {isLoadingStats ? (
                   <div className="flex items-center justify-center h-12">
@@ -401,7 +386,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
                 ) : (
                   <p className="text-3xl font-bold text-indigo-600">{stats.verifikasiLapangan}</p>
                 )}
-              </button>
+              </div>
               {!isLoadingStats && (
                 <GroupBreakdown 
                   groupCounts={statsByGroup.verifikasiLapangan}
@@ -413,11 +398,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               )}
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-              <button
-                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'WaitingHSEManager', pageAlias: 'daftar-ajuan-b3' })}
-                className="w-full text-left"
-              >
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-2">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Waiting HSE Manager</h3>
                 {isLoadingStats ? (
                   <div className="flex items-center justify-center h-12">
@@ -429,7 +411,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
                 ) : (
                   <p className="text-3xl font-bold text-yellow-600">{stats.waitingHseManager}</p>
                 )}
-              </button>
+              </div>
               {!isLoadingStats && (
                 <GroupBreakdown 
                   groupCounts={statsByGroup.waitingHseManager}
@@ -441,11 +423,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               )}
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-              <button
-                onClick={() => onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Rejected', pageAlias: 'daftar-ajuan-b3' })}
-                className="w-full text-left"
-              >
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-2">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Rejected (KL)</h3>
                 {isLoadingStats ? (
                   <div className="flex items-center justify-center h-12">
@@ -457,7 +436,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
                 ) : (
                   <p className="text-3xl font-bold text-red-600">{stats.rejectedKL}</p>
                 )}
-              </button>
+              </div>
               {!isLoadingStats && (
                 <GroupBreakdown 
                   groupCounts={statsByGroup.rejectedKL}

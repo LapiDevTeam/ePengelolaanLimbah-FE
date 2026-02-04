@@ -198,7 +198,7 @@ const MainLayout = () => {
       case "pending-approvals":
         return <PendingApprovals onNavigate={handleNavigate} />
       case "berita-acara":
-        return <BeritaAcara onNavigate={handleNavigate} onPendingApprovalChange={setHasPendingApproval} pendingApprovalByGroup={pendingApprovalByGroup} group={pageData?.group} />
+        return <BeritaAcara onNavigate={handleNavigate} onPendingApprovalChange={setHasPendingApproval} pendingApprovalByGroup={pendingApprovalByGroup} group={pageData?.group} viewMode={pageData?.viewMode} />
       case "detail-berita-acara":
         if (!pageData?.id) {
           handleNavigate('berita-acara')

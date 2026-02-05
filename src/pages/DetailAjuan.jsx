@@ -17,6 +17,7 @@ import {
   DEFAULT_JENIS_OPTIONS,
   DEFAULT_GOLONGAN_OPTIONS
 } from "../constants/referenceData";
+import { canShowApprovalActions } from "../constants/accessRights";
 
 // Use centralized Jakarta formatters so displayed timestamps match stored Jakarta wall-clock
 const formatTimestamp = (timestamp) => {
@@ -777,10 +778,8 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
           </div>
         </div>
             {/* Action buttons for approvers - placed below Lampiran table */}
-            {(
-              (user?.role === 'Manager' || user?.role === 'HSE') || 
-              (user?.log_NIK === 'PJKPO' && data?.isProdukPangan === true && data?.currentStepLevel === 2) // PJKPO for produk pangan at APJ step
-            ) && data?.status === 'InProgress' && !fromApprovedTab && !data?.processedByCurrentUser && (
+            {/* Using centralized access rights check (see src/constants/accessRights.js) */}
+            {canShowApprovalActions(user, data, fromApprovedTab) && (
               <div className="p-6 border-t border-gray-200 flex items-center gap-3 justify-end">
                 <button
                   onClick={() => handleApprove(applicationId || data.id)}

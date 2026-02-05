@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import DataTable from "../components/DataTable";
 import { useAuth } from "../contexts/AuthContext";
+import { 
+  hasDaftarAjuanApprovalAuthority,
+  isHSEManager as checkIsHSEManager,
+  isFromKLDepartment 
+} from "../constants/accessRights";
 
 const DaftarAjuan = ({ onNavigate, pageData }) => {
   const { user } = useAuth();
@@ -61,16 +66,14 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
     }
   }, [activeTab]);
   
-  // Check if user has approval authority (Manager, HSE, or other approval roles)
-  // Also include PJKPO users based on their log_NIK
-  const hasApprovalAuthority = (user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role)) || 
-  (user?.log_NIK === "PJKPO");
+  // Use centralized access rights (see src/constants/accessRights.js)
+  const hasApprovalAuthority = hasDaftarAjuanApprovalAuthority(user);
 
   // Check if user is HSE Manager (based on Jabatan field)
-  const isHSEManager = user?.Jabatan === "Health,Safety & Environment Manager";
+  const isHSEManager = checkIsHSEManager(user);
 
   // Check if user is from KL department (HSE/KL team) based solely on department ID
-  const isFromKL = user?.emp_DeptID && String(user.emp_DeptID).toUpperCase() === "KL";
+  const isFromKL = isFromKLDepartment(user);
 
   const handleAddApplication = () => {
     // Navigate to form page when implemented

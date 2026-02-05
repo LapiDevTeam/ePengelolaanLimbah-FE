@@ -14,6 +14,11 @@ import {
   DEFAULT_GOLONGAN_OPTIONS
 } from "../constants/referenceData";
 import { showSuccess, showError, showConfirmation } from "../utils/sweetAlert";
+import { 
+  isPemohon as checkIsPemohon,
+  isManager as checkIsManager,
+  isHSE as checkIsHSE 
+} from "../constants/accessRights";
 
 // Simple CSS icons as components
 const SearchIcon = () => (
@@ -457,10 +462,10 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
     }
   };
 
-  // Role-based permissions
-  const isPemohon = user?.role === "Pemohon";
-  const isManager = user?.role === "Manager";
-  const isHSE = user?.role === "HSE";
+  // Role-based permissions (using centralized accessRights)
+  const isPemohon = checkIsPemohon(user);
+  const isManager = checkIsManager(user);
+  const isHSE = checkIsHSE(user);
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">

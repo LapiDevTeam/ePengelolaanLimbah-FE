@@ -5,8 +5,9 @@ import { dataAPI } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useConfigContext } from "../contexts/ConfigContext";
 import { getBeritaAcaraStatusDisplayName } from "../constants/referenceData";
-import { formatDateID, formatDateTimeID, toJakartaIsoFromLocal } from "../utils/time";
+import { formatDateID } from "../utils/time";
 import { showInfo } from "../utils/sweetAlert";
+import { hasBeritaAcaraApprovalAuthority } from "../constants/accessRights";
 
 // Simple CSS icons as components
 const SearchIcon = () => (
@@ -69,8 +70,8 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange, initialTab 
   const urlParams = new URLSearchParams(window.location.search);
   const groupFilter = urlParams.get('group') || null;
 
-  // Check if user has approval authority for Berita Acara (includes PL for Head of Plant)
-  const hasApprovalAuthority = user?.role && ["Manager", "HSE", "APJ", "QA", "PL"].includes(user.role);
+  // Use centralized access rights (see src/constants/accessRights.js)
+  const hasApprovalAuthority = hasBeritaAcaraApprovalAuthority(user);
 
   // Reset to page 1 when tab changes
   useEffect(() => {
@@ -196,10 +197,6 @@ const BeritaAcaraDataTable = ({ onNavigate, onPendingApprovalChange, initialTab 
       showInfo("View berita acara functionality will be implemented here");
     }
   };
-
-  // Role-based permissions
-  const isPemohon = user?.role === "Pemohon";
-  const isManager = user?.role === "Manager";
 
   // Build tabs dynamically based on approval authority
   const tabs = [

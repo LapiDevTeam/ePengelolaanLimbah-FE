@@ -2,6 +2,11 @@ import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import api from "../services/api"
 import { showSuccess, showError, showWarning } from "../utils/sweetAlert"
+import { 
+  hasDaftarAjuanApprovalAuthority,
+  hasBeritaAcaraApprovalAuthority,
+  isFromKLDepartment 
+} from "../constants/accessRights"
 
 const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 } }) => {
   const { user, fetchProfile } = useAuth()
@@ -183,10 +188,10 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
 
   // Get user's department
   const userDepartment = user?.emp_DeptID;
-  // Align naming with DaftarAjuan: hasApprovalAuthority and isFromKL
-  const hasApprovalAuthority = (user?.role && ["Manager", "HSE", "APJ", "QA"].includes(user.role)) || (user?.log_NIK === "PJKPO");
-  const hasBeritaAcaraAuthority = user?.role && ["Manager", "HSE", "APJ", "QA", "PL"].includes(user.role);
-  const isFromKL = user?.emp_DeptID && String(user.emp_DeptID).toUpperCase() === "KL";
+  // Use centralized access rights (see src/constants/accessRights.js)
+  const hasApprovalAuthority = hasDaftarAjuanApprovalAuthority(user);
+  const hasBeritaAcaraAuthority = hasBeritaAcaraApprovalAuthority(user);
+  const isFromKL = isFromKLDepartment(user);
 
   // Reusable component for group breakdown
   const GroupBreakdown = ({ groupCounts, onGroupClick, basePage, baseViewMode }) => {

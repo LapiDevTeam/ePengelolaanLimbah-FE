@@ -3,6 +3,7 @@ import { dataAPI } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toJakartaIsoFromLocal, formatDateID, formatDateTimeID, formatTimeID, formatTimeHHMM } from "../utils/time";
 import { showSuccess, showError, showWarning, showInfo, showConfirmation } from "../utils/sweetAlert";
+import { isPemohon as checkIsPemohon } from "../constants/accessRights";
 
 // Simple CSS icons as components
 const ChevronDownIcon = () => (
@@ -400,7 +401,8 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     }
   };
 
-  const isPemohon = user?.role === "Pemohon";
+  // Role-based permission (using centralized accessRights)
+  const isPemohon = checkIsPemohon(user);
 
   return (
     <div className="p-6">

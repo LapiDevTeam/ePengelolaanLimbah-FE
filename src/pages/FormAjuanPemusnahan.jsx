@@ -683,8 +683,8 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
   };
 
   // Allow any authenticated user (or delegated user) to create/save a new permohonan.
-  // Previously only 'Pemohon' role could save drafts; requirement: all users can make permohonan.
-  const canCreateAjuan = !!user; // any logged-in user
+  // Using centralized access rights (see src/constants/accessRights.js)
+  const canCreateAjuan = !!user; // any logged-in user (defined in accessRights.js as canCreateAjuan)
 
   // Show loading state while loading edit data
   if (loadingEditData) {

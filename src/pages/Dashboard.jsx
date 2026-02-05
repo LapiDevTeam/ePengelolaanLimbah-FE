@@ -9,7 +9,8 @@ import {
   canSeeVerifikasiLapanganCard,
   getVerifikasiLapanganScope,
   canSeePembuatanBAPCard,
-  getPembuatanBAPScope
+  getPembuatanBAPScope,
+  getDownloadLampiranOptions
 } from "../constants/accessRights"
 
 const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 } }) => {
@@ -20,6 +21,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
   const [startDatePermohonan, setStartDatePermohonan] = useState('')
   const [endDatePermohonan, setEndDatePermohonan] = useState('')
   const [isDownloadingPermohonan, setIsDownloadingPermohonan] = useState(false)
+  // Golongan selection for download lampiran
+  const [selectedGolonganGroups, setSelectedGolonganGroups] = useState([])
   const [stats, setStats] = useState({
     myRequests: 0,
     pendingApprovals: 0,
@@ -165,11 +168,24 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
       return
     }
 
+    // Validate golongan selection
+    if (selectedGolonganGroups.length === 0) {
+      showWarning('Silakan pilih minimal satu golongan')
+      return
+    }
+
     setIsDownloadingPermohonan(true)
     
     try {
-      // Call the new endpoint directly via axios
-      const response = await api.downloadPermohonanByDateRangeExcel(startDatePermohonan, endDatePermohonan)
+      // Prepare golongan groups parameter
+      const golonganGroupsParam = selectedGolonganGroups.join(',')
+      
+      // Call the endpoint with golongan groups
+      const response = await api.downloadPermohonanByDateRangeExcel(
+        startDatePermohonan, 
+        endDatePermohonan,
+        golonganGroupsParam
+      )
       
       // Handle response which is blob data
       const blob = new Blob([response.data], { 
@@ -188,9 +204,62 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
       showSuccess('File lampiran permohonan berhasil diunduh!')
     } catch (error) {
       console.error('Error downloading permohonan:', error)
-      showError('Gagal download lampiran permohonan: ' + (error.response?.data?.message || error.message))
+      
+      // Handle 404 - no data found
+      if (error.response?.status === 404) {
+        const errorData = error.response?.data
+        let errorMsg = errorData?.message || 'Tidak ada data yang ditemukan'
+        
+        // Add details if available
+        if (errorData?.details) {
+          const d = errorData.details
+          errorMsg += `\n\nDetail:\n`
+          errorMsg += `• Total data ditemukan: ${d.totalFound || 0}\n`
+          errorMsg += `• Setelah filter akses: ${d.afterScopeFilter || 0}\n`
+          errorMsg += `• Setelah filter status: ${d.afterStatusFilter || 0}\n`
+          errorMsg += `• Rentang tanggal: ${d.dateRange || '-'}\n`
+          errorMsg += `• Golongan dipilih: ${d.selectedGroups || '-'}\n\n`
+          errorMsg += `Kriteria: ${d.criteria || '-'}`
+        }
+        
+        showWarning(errorMsg)
+      } else {
+        // Other errors
+        showError('Gagal download lampiran permohonan: ' + (error.response?.data?.message || error.message))
+      }
     } finally {
       setIsDownloadingPermohonan(false)
+    }
+  }
+
+  // Handle golongan group selection
+  const handleGolonganGroupChange = (group) => {
+    const downloadOptions = getDownloadLampiranOptions(user)
+    
+    if (downloadOptions.canMultiSelect) {
+      // Multi-select (KL users) - toggle the group
+      setSelectedGolonganGroups(prev => {
+        if (prev.includes(group)) {
+          return prev.filter(g => g !== group)
+        } else {
+          return [...prev, group]
+        }
+      })
+    } else {
+      // Single-select (non-KL users) - replace selection
+      setSelectedGolonganGroups([group])
+    }
+  }
+
+  // Handle "Select All" for KL users
+  const handleSelectAllGolongan = () => {
+    const downloadOptions = getDownloadLampiranOptions(user)
+    if (downloadOptions.canMultiSelect) {
+      if (selectedGolonganGroups.length === downloadOptions.availableGroups.length) {
+        setSelectedGolonganGroups([]) // Deselect all
+      } else {
+        setSelectedGolonganGroups([...downloadOptions.availableGroups]) // Select all
+      }
     }
   }
 
@@ -200,6 +269,9 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
   const hasApprovalAuthority = hasDaftarAjuanApprovalAuthority(user);
   const hasBeritaAcaraAuthority = hasBeritaAcaraApprovalAuthority(user);
   const isFromKL = isFromKLDepartment(user);
+  
+  // Get download lampiran options
+  const downloadLampiranOptions = getDownloadLampiranOptions(user);
   
   // Get scopes for verifikasi lapangan and pembuatan BAP
   const verifikasiScope = getVerifikasiLapanganScope(user);
@@ -605,7 +677,61 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
 
       {/* Download Lampiran Permohonan Section */}
       <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-green-800 mb-4">Download Lampiran Permohonan</h2>        
+        <h2 className="text-xl font-semibold text-green-800 mb-4">Download Lampiran Permohonan</h2>
+        
+        {/* Golongan Selection */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Pilih Golongan {downloadLampiranOptions.canMultiSelect ? '(bisa pilih lebih dari satu)' : ''}
+          </label>
+          
+          {downloadLampiranOptions.canMultiSelect ? (
+            // Multi-select checkboxes for KL users
+            <div className="flex flex-wrap gap-4">
+              <label className="inline-flex items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedGolonganGroups.length === downloadLampiranOptions.availableGroups.length}
+                  onChange={handleSelectAllGolongan}
+                  className="form-checkbox h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <span className="ml-2 text-sm text-gray-700 font-medium">Semua Golongan</span>
+              </label>
+              <div className="w-px h-6 bg-gray-300"></div>
+              {downloadLampiranOptions.availableGroups.map((group) => {
+                const groupLabels = {
+                  'limbah-b3': 'Limbah B3',
+                  'recall': 'Recall',
+                  'recall-precursor': 'Precursor & OOT'
+                }
+                return (
+                  <label key={group} className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedGolonganGroups.includes(group)}
+                      onChange={() => handleGolonganGroupChange(group)}
+                      className="form-checkbox h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">{groupLabels[group]}</span>
+                  </label>
+                )
+              })}
+            </div>
+          ) : (
+            // Single-select dropdown for non-KL users
+            <select
+              value={selectedGolonganGroups[0] || ''}
+              onChange={(e) => setSelectedGolonganGroups(e.target.value ? [e.target.value] : [])}
+              className="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            >
+              <option value="">-- Pilih Golongan --</option>
+              <option value="limbah-b3">Limbah B3</option>
+              <option value="recall">Recall</option>
+              <option value="recall-precursor">Precursor & OOT</option>
+            </select>
+          )}
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
             <label htmlFor="start-date-permohonan" className="block text-sm font-medium text-gray-700 mb-2">
@@ -636,7 +762,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
           <div>
             <button
               onClick={handleDownloadPermohonanByDateRange}
-              disabled={isDownloadingPermohonan || !startDatePermohonan || !endDatePermohonan}
+              disabled={isDownloadingPermohonan || !startDatePermohonan || !endDatePermohonan || selectedGolonganGroups.length === 0}
               className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {isDownloadingPermohonan ? (
@@ -655,13 +781,28 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         </div>
         
         <div className="mt-4 text-sm text-green-600">
-          <p>• Download semua lampiran permohonan dalam range tanggal yang dipilih</p>
+          <p>• Download lampiran permohonan dalam range tanggal dan golongan yang dipilih</p>
           <p>• Data diambil dari tanggal pengajuan</p>
           <p>• Satu baris per detail limbah dengan informasi permohonan</p>
           {isFromKL ? (
-            <p className="font-semibold">• User KL: Dapat mendownload data dari semua bagian</p>
+            <p className="font-semibold">• User KL: Dapat mendownload data dari semua bagian untuk semua golongan</p>
           ) : (
-            <p className="font-semibold">• User {userDepartment || 'Non-KL'}: Hanya dapat mendownload data dari bagian sendiri ({userDepartment})</p>
+            <>
+              <p className="font-semibold">• User {userDepartment || 'Non-KL'}:</p>
+              {userDepartment === 'QA' ? (
+                <>
+                  <p className="ml-4">- Recall: Dapat melihat semua bagian</p>
+                  <p className="ml-4">- Limbah B3 & Precursor: Hanya bagian {userDepartment}</p>
+                </>
+              ) : userDepartment === 'PN1' ? (
+                <>
+                  <p className="ml-4">- Precursor & OOT: Dapat melihat semua bagian</p>
+                  <p className="ml-4">- Limbah B3 & Recall: Hanya bagian {userDepartment}</p>
+                </>
+              ) : (
+                <p className="ml-4">- Semua golongan: Hanya bagian {userDepartment}</p>
+              )}
+            </>
           )}
         </div>
       </div>

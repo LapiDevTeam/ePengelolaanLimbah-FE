@@ -59,7 +59,15 @@ const formatTimestamp = (timestamp) => {
   return formatDateID(timestamp);
 };
 
-const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser, statusFilter = '' }) => {
+const DataTable = ({ 
+  onNavigate, 
+  viewMode = "my-requests", 
+  userRole, 
+  currentUser, 
+  statusFilter = '',
+  allPermohonanAllowedStatuses = null,
+  allPermohonanScope = null
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedColumn, setSelectedColumn] = useState("noPermohonan");
   const [currentPage, setCurrentPage] = useState(1);
@@ -136,16 +144,48 @@ const DataTable = ({ onNavigate, viewMode = "my-requests", userRole, currentUser
             group: groupFilter
           });
         } else if (viewMode === "all-permohonan") {
-          // KL: fetch all requests across users (no userOnly filter), optionally filtered by status
-          response = await dataAPI.getDestructionRequests({
+          // All Permohonan tab - different scope based on user
+          // - KL: fetch all requests across users (no userOnly filter)
+          // - Non-KL: fetch only Verification and Pembuatan BAP, filtered by bagian/group
+          
+          // Determine the status filter to use
+          let effectiveStatusFilter = statusFilter || undefined;
+          
+          // If user is non-KL and no specific status filter from dashboard click,
+          // we need to pass the allowed statuses to backend
+          const isKLUser = allPermohonanScope?.scope === 'all';
+          
+          // Build request params
+          const requestParams = {
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
             userOnly: false,
-            statusFilter: statusFilter || undefined,
             group: groupFilter
-          });
+          };
+          
+          // Add status filter
+          if (effectiveStatusFilter) {
+            // Specific status from dashboard click
+            requestParams.statusFilter = effectiveStatusFilter;
+          } else if (!isKLUser && allPermohonanAllowedStatuses) {
+            // Non-KL user without specific filter - restrict to allowed statuses
+            requestParams.statusFilter = allPermohonanAllowedStatuses.join(',');
+          }
+          
+          // Add bagian/scope filtering for non-KL users
+          if (allPermohonanScope && allPermohonanScope.filterByBagian) {
+            requestParams.filterByBagian = true;
+            requestParams.userBagian = currentUser?.emp_DeptID;
+            
+            // Add additional groups for QA/PN1
+            if (allPermohonanScope.additionalGroups && allPermohonanScope.additionalGroups.length > 0) {
+              requestParams.additionalGroups = allPermohonanScope.additionalGroups.join(',');
+            }
+          }
+          
+          response = await dataAPI.getDestructionRequests(requestParams);
         } else if (viewMode === "approved") {
           // Fetch requests processed (approved/rejected) by this user
           response = await dataAPI.getProcessedByUser({

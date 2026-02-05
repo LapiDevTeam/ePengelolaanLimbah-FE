@@ -5,7 +5,11 @@ import { showSuccess, showError, showWarning } from "../utils/sweetAlert"
 import { 
   hasDaftarAjuanApprovalAuthority,
   hasBeritaAcaraApprovalAuthority,
-  isFromKLDepartment 
+  isFromKLDepartment,
+  canSeeVerifikasiLapanganCard,
+  getVerifikasiLapanganScope,
+  canSeePembuatanBAPCard,
+  getPembuatanBAPScope
 } from "../constants/accessRights"
 
 const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 } }) => {
@@ -23,6 +27,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
     // KL-specific counts (backend should include these when applicable)
     waitingHseManager: 0,
     verifikasiLapangan: 0,
+    pembuatanBAP: 0,
     rejectedKL: 0
   })
   const [isLoadingStats, setIsLoadingStats] = useState(true)
@@ -32,6 +37,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
     approved: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
     waitingHseManager: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
     verifikasiLapangan: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+    pembuatanBAP: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
     rejectedKL: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 }
   })
 
@@ -61,6 +67,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
             approved: approvedTotal,
             waitingHseManager: backendStats.waitingHseManager || 0,
             verifikasiLapangan: backendStats.verifikasiLapangan || 0,
+            pembuatanBAP: backendStats.pembuatanBAP || 0,
             rejectedKL: backendStats.rejectedKL || 0
           })
           
@@ -81,6 +88,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
             approved: approvedByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
             waitingHseManager: backendStats.waitingHseManagerByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
             verifikasiLapangan: backendStats.verifikasiLapanganByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
+            pembuatanBAP: backendStats.pembuatanBAPByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
             rejectedKL: backendStats.rejectedKLByGroup || { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 }
           })
         } else {
@@ -192,9 +200,17 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
   const hasApprovalAuthority = hasDaftarAjuanApprovalAuthority(user);
   const hasBeritaAcaraAuthority = hasBeritaAcaraApprovalAuthority(user);
   const isFromKL = isFromKLDepartment(user);
+  
+  // Get scopes for verifikasi lapangan and pembuatan BAP
+  const verifikasiScope = getVerifikasiLapanganScope(user);
+  const pembuatanBAPScope = getPembuatanBAPScope(user);
+  
+  // Check if user can see the cards (all logged in users)
+  const showVerifikasiLapanganCard = canSeeVerifikasiLapanganCard(user);
+  const showPembuatanBAPCard = canSeePembuatanBAPCard(user);
 
   // Reusable component for group breakdown
-  const GroupBreakdown = ({ groupCounts, onGroupClick, basePage, baseViewMode }) => {
+  const GroupBreakdown = ({ groupCounts, onGroupClick }) => {
     const groupLabels = {
       'limbah-b3': 'Limbah B3',
       'recall': 'Recall',
@@ -301,33 +317,129 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
             )}
           </div>
         )}
-        {/* Approved Card - Only visible for users with approval authority */}
-        {hasApprovalAuthority && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="mb-2">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Approved</h3>
-              {isLoadingStats ? (
-                <div className="flex items-center justify-center h-12">
-                  <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </div>
-              ) : (
-                <p className="text-3xl font-bold text-blue-600">{stats.approved}</p>
+
+        {/* Verifikasi Lapangan Card - Visible for all users with different data scopes */}
+        {showVerifikasiLapanganCard && (() => {
+          // Filter group counts based on user's allowed groups
+          const filteredGroupCounts = {};
+          
+          for (const group of verifikasiScope.allowedGroups) {
+            const count = statsByGroup.verifikasiLapangan[group] || 0;
+            filteredGroupCounts[group] = count;
+          }
+          
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Verifikasi Lapangan</h3>
+                {isLoadingStats ? (
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-indigo-600">
+                    {stats.verifikasiLapangan}
+                  </p>
+                )}
+                {verifikasiScope.scope === 'own' && (
+                  <p className="text-xs text-gray-500 mt-1">Menampilkan data bagian Anda</p>
+                )}
+                {verifikasiScope.scope === 'bagian_plus_group' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Menampilkan data bagian Anda + {verifikasiScope.additionalGroups?.map(g => {
+                      const labels = { 'limbah-b3': 'Limbah B3', 'recall': 'Recall', 'recall-precursor': 'Precursor' };
+                      return labels[g];
+                    }).join(', ')}
+                  </p>
+                )}
+                {verifikasiScope.scope === 'all' && (
+                  <p className="text-xs text-gray-500 mt-1">Menampilkan semua data</p>
+                )}
+              </div>
+              {!isLoadingStats && (
+                <GroupBreakdown 
+                  groupCounts={filteredGroupCounts}
+                  onGroupClick={(group) => {
+                    const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
+                    // Navigate to all-permohonan with Verification status filter
+                    // If user has filterByBagian, the DataTable will handle filtering by user's bagian
+                    onNavigate && onNavigate('daftar-ajuan', { 
+                      viewMode: 'all-permohonan', 
+                      statusFilter: 'Verification', 
+                      group, 
+                      pageAlias: aliasMap[group] || 'daftar-ajuan',
+                      filterByBagian: verifikasiScope.filterByBagian
+                    })
+                  }}
+                />
               )}
             </div>
-            {!isLoadingStats && (
-              <GroupBreakdown 
-                groupCounts={statsByGroup.approved}
-                onGroupClick={(group) => {
-                  const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
-                  onNavigate && onNavigate('daftar-ajuan', { viewMode: 'approved', group, pageAlias: aliasMap[group] || 'daftar-ajuan' })
-                }}
-              />
-            )}
-          </div>
-        )}
+          );
+        })()}
+
+        {/* Pembuatan BAP Card - Visible for all users with different data scopes */}
+        {showPembuatanBAPCard && (() => {
+          // Filter group counts based on user's allowed groups
+          const filteredGroupCounts = {};
+          
+          for (const group of pembuatanBAPScope.allowedGroups) {
+            const count = statsByGroup.pembuatanBAP[group] || 0;
+            filteredGroupCounts[group] = count;
+          }
+          
+          return (
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Pembuatan BAP</h3>
+                {isLoadingStats ? (
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-blue-600">
+                    {stats.pembuatanBAP}
+                  </p>
+                )}
+                {pembuatanBAPScope.scope === 'own' && (
+                  <p className="text-xs text-gray-500 mt-1">Menampilkan data bagian Anda</p>
+                )}
+                {pembuatanBAPScope.scope === 'bagian_plus_group' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Menampilkan data bagian Anda + {pembuatanBAPScope.additionalGroups?.map(g => {
+                      const labels = { 'limbah-b3': 'Limbah B3', 'recall': 'Recall', 'recall-precursor': 'Precursor' };
+                      return labels[g];
+                    }).join(', ')}
+                  </p>
+                )}
+                {pembuatanBAPScope.scope === 'all' && (
+                  <p className="text-xs text-gray-500 mt-1">Menampilkan semua data</p>
+                )}
+              </div>
+              {!isLoadingStats && (
+                <GroupBreakdown 
+                  groupCounts={filteredGroupCounts}
+                  onGroupClick={(group) => {
+                    const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
+                    // Navigate to all-permohonan with Pembuatan BAP status filter
+                    onNavigate && onNavigate('daftar-ajuan', { 
+                      viewMode: 'all-permohonan', 
+                      statusFilter: 'Pembuatan BAP', 
+                      group, 
+                      pageAlias: aliasMap[group] || 'daftar-ajuan',
+                      filterByBagian: pembuatanBAPScope.filterByBagian
+                    })
+                  }}
+                />
+              )}
+            </div>
+          );
+        })()}
 
         {/* Berita Acara Pending Approval Card - Only visible for users with Berita Acara approval authority */}
         {hasBeritaAcaraAuthority && (() => {
@@ -378,31 +490,6 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         {/* KL-specific status cards for KL users who are not approvers (officer view) */}
         {isFromKL && !hasApprovalAuthority && (
           <>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="mb-2">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Verifikasi Lapangan</h3>
-                {isLoadingStats ? (
-                  <div className="flex items-center justify-center h-12">
-                    <svg className="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  </div>
-                ) : (
-                  <p className="text-3xl font-bold text-indigo-600">{stats.verifikasiLapangan}</p>
-                )}
-              </div>
-              {!isLoadingStats && (
-                <GroupBreakdown 
-                  groupCounts={statsByGroup.verifikasiLapangan}
-                  onGroupClick={(group) => {
-                    const aliasMap = { 'limbah-b3': 'daftar-ajuan-b3', 'recall': 'daftar-ajuan-recall', 'recall-precursor': 'daftar-ajuan-recall-precursor-oot' }
-                    onNavigate && onNavigate('daftar-ajuan', { viewMode: 'all-permohonan', statusFilter: 'Verification', group, pageAlias: aliasMap[group] || 'daftar-ajuan' })
-                  }}
-                />
-              )}
-            </div>
-
             <div className="bg-white rounded-lg shadow p-6">
               <div className="mb-2">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Waiting HSE Manager</h3>

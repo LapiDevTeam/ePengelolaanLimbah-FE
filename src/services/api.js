@@ -61,7 +61,20 @@ export const dataAPI = {
   // Get all destruction requests with pagination and filtering
   getDestructionRequests: async (params = {}) => {
     try {
-      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', userOnly = true, statusFilter = '', group = null, excludeCompleted = false } = params;
+      const { 
+        page = 1, 
+        limit = 8, 
+        searchTerm = '', 
+        selectedColumn = '', 
+        userOnly = true, 
+        statusFilter = '', 
+        group = null, 
+        excludeCompleted = false,
+        // New params for all-permohonan tab (non-KL users)
+        filterByBagian = false,
+        userBagian = '',
+        additionalGroups = ''
+      } = params;
       
       // Build query params
       const queryParams = new URLSearchParams({
@@ -94,6 +107,17 @@ export const dataAPI = {
       // Add group filter
       if (group) {
         queryParams.append('group', group);
+      }
+
+      // Add bagian filtering for non-KL users in all-permohonan tab
+      if (filterByBagian && userBagian) {
+        queryParams.append('filterByBagian', 'true');
+        queryParams.append('userBagian', userBagian);
+        
+        // Add additional groups for QA/PN1
+        if (additionalGroups) {
+          queryParams.append('additionalGroups', additionalGroups);
+        }
       }
 
       const response = await api.get(`/permohonan?${queryParams}`);

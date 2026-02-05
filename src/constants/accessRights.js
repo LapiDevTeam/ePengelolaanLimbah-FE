@@ -45,6 +45,16 @@ export const HSE_MANAGER_JABATAN = "Health,Safety & Environment Manager";
  */
 export const KL_DEPARTMENT_ID = "KL";
 
+/**
+ * Department ID for QA (Quality Assurance)
+ */
+export const QA_DEPARTMENT_ID = "QA";
+
+/**
+ * Department ID for PN1 (Production/Plant 1)
+ */
+export const PN1_DEPARTMENT_ID = "PN1";
+
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
@@ -147,6 +157,34 @@ export const isHSEManager = (user) => {
   if (!normalizedUser) return false;
 
   return normalizedUser.Jabatan === HSE_MANAGER_JABATAN;
+};
+
+/**
+ * Check if user is from QA department (Quality Assurance)
+ * Used for department-specific filtering and access
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {boolean} True if user is from QA department
+ */
+export const isFromQADepartment = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) return false;
+
+  return normalizedUser.emp_DeptID === QA_DEPARTMENT_ID;
+};
+
+/**
+ * Check if user is from PN1 department (Production/Plant 1)
+ * Used for department-specific filtering and access
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {boolean} True if user is from PN1 department
+ */
+export const isFromPN1Department = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) return false;
+
+  return normalizedUser.emp_DeptID === PN1_DEPARTMENT_ID;
 };
 
 // =============================================================================
@@ -302,6 +340,265 @@ export const shouldShowDaftarAjuanTabs = (user) => {
 };
 
 // =============================================================================
+// VERIFIKASI LAPANGAN PERMISSIONS
+// =============================================================================
+
+/**
+ * Group constants for golongan filtering
+ */
+export const GOLONGAN_GROUPS = {
+  LIMBAH_B3: 'limbah-b3',
+  RECALL: 'recall',
+  RECALL_PRECURSOR: 'recall-precursor'
+};
+
+/**
+ * Check if user can see Verifikasi Lapangan card on Dashboard
+ * Approvers (Manager, HSE, APJ) don't need this card as they have Pending Approval
+ * Used in: Dashboard.jsx
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {boolean} True if user can see verifikasi lapangan card
+ */
+export const canSeeVerifikasiLapanganCard = (user) => {
+  if (!user) return false;
+  
+  // Approvers don't see this card - they have Pending Approval
+  if (hasDaftarAjuanApprovalAuthority(user)) {
+    return false;
+  }
+  
+  return true;
+};
+
+/**
+ * Get the verifikasi lapangan data scope for a user
+ * Determines which data the user can see based on their department/role
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {object} { scope: 'own'|'group'|'all', allowedGroups: string[], filterByBagian: boolean }
+ */
+export const getVerifikasiLapanganScope = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) {
+    return { scope: 'none', allowedGroups: [], filterByBagian: false };
+  }
+
+  // KL users can see all data (only KL, not approvers)
+  if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
+    return { 
+      scope: 'all', 
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+      filterByBagian: false 
+    };
+  }
+
+  // QA users can see their own bagian data + all 'recall' group data
+  if (normalizedUser.emp_DeptID === QA_DEPARTMENT_ID) {
+    return { 
+      scope: 'bagian_plus_group', 
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+      filterByBagian: true,
+      additionalGroups: [GOLONGAN_GROUPS.RECALL]
+    };
+  }
+
+  // PN1 users can see their own bagian data + all 'recall-precursor' group data
+  if (normalizedUser.emp_DeptID === PN1_DEPARTMENT_ID) {
+    return { 
+      scope: 'bagian_plus_group', 
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+      filterByBagian: true,
+      additionalGroups: [GOLONGAN_GROUPS.RECALL_PRECURSOR]
+    };
+  }
+
+  // Regular users can only see data from their own department (bagian)
+  return { 
+    scope: 'own', 
+    allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+    filterByBagian: true 
+  };
+};
+
+/**
+ * Check if user can see Pembuatan BAP card on Dashboard
+ * Approvers (Manager, HSE, APJ) don't need this card as they have Pending Approval
+ * Used in: Dashboard.jsx
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {boolean} True if user can see pembuatan BAP card
+ */
+export const canSeePembuatanBAPCard = (user) => {
+  if (!user) return false;
+  
+  // Approvers don't see this card - they have Pending Approval
+  if (hasDaftarAjuanApprovalAuthority(user)) {
+    return false;
+  }
+  
+  return true;
+};
+
+/**
+ * Get the Pembuatan BAP data scope for a user
+ * Determines which data the user can see based on their department/role
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {object} { scope: 'own'|'group'|'all', allowedGroups: string[], filterByBagian: boolean }
+ */
+export const getPembuatanBAPScope = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) {
+    return { scope: 'none', allowedGroups: [], filterByBagian: false };
+  }
+
+  // KL users can see all data (only KL, not approvers)
+  if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
+    return { 
+      scope: 'all', 
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+      filterByBagian: false 
+    };
+  }
+
+  // QA users can see their own bagian data + all 'recall' group data
+  if (normalizedUser.emp_DeptID === QA_DEPARTMENT_ID) {
+    return { 
+      scope: 'bagian_plus_group', 
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+      filterByBagian: true,
+      additionalGroups: [GOLONGAN_GROUPS.RECALL]
+    };
+  }
+
+  // PN1 users can see their own bagian data + all 'recall-precursor' group data
+  if (normalizedUser.emp_DeptID === PN1_DEPARTMENT_ID) {
+    return { 
+      scope: 'bagian_plus_group', 
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+      filterByBagian: true,
+      additionalGroups: [GOLONGAN_GROUPS.RECALL_PRECURSOR]
+    };
+  }
+
+  // Regular users can only see data from their own department (bagian)
+  return { 
+    scope: 'own', 
+    allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+    filterByBagian: true 
+  };
+};
+
+// =============================================================================
+// ALL PERMOHONAN TAB PERMISSIONS
+// =============================================================================
+
+/**
+ * Check if user can see All Permohonan tab ("Verifikasi & Pembuatan BAP" for non-KL)
+ * - KL users: see this tab ("All Permohonan") with all statuses
+ * - Non-KL, non-approvers: see this tab ("Verifikasi & Pembuatan BAP") with limited statuses
+ * - Approvers (Manager, HSE, APJ): DON'T see this tab - they have Pending Approval instead
+ * Used in: DaftarAjuan.jsx
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {boolean} True if user can see All Permohonan tab
+ */
+export const canSeeAllPermohonanTab = (user) => {
+  if (!user) return false;
+  
+  // KL users always see this tab (All Permohonan)
+  if (isFromKLDepartment(user)) {
+    return true;
+  }
+  
+  // Approvers don't see this tab - they have Pending Approval
+  if (hasDaftarAjuanApprovalAuthority(user)) {
+    return false;
+  }
+  
+  // All other users see this tab (Verifikasi & Pembuatan BAP)
+  return true;
+};
+
+/**
+ * Get the allowed statuses for All Permohonan tab based on user
+ * - KL: all statuses (null = no filter)
+ * - Non-KL: only Verification and Pembuatan BAP
+ * Used in: DaftarAjuan.jsx, DataTable.jsx
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {string[]|null} Array of allowed statuses, or null for all statuses
+ */
+export const getAllPermohonanAllowedStatuses = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) return [];
+  
+  // KL users can see all statuses
+  if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
+    return null; // null means all statuses
+  }
+  
+  // Non-KL users can only see Verification and Pembuatan BAP
+  return ['Verification', 'Pembuatan BAP'];
+};
+
+/**
+ * Get the All Permohonan data scope for a user
+ * Same logic as Verifikasi/Pembuatan BAP scope
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {object} { scope, filterByBagian, additionalGroups, allowedStatuses }
+ */
+export const getAllPermohonanScope = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) {
+    return { scope: 'none', filterByBagian: false, additionalGroups: [], allowedStatuses: [] };
+  }
+
+  // KL users can see all data and all statuses
+  if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
+    return { 
+      scope: 'all', 
+      filterByBagian: false,
+      additionalGroups: [],
+      allowedStatuses: null // null = all statuses
+    };
+  }
+
+  // QA users can see their own bagian data + all 'recall' group data
+  // But only for Verification and Pembuatan BAP statuses
+  if (normalizedUser.emp_DeptID === QA_DEPARTMENT_ID) {
+    return { 
+      scope: 'bagian_plus_group', 
+      filterByBagian: true,
+      additionalGroups: [GOLONGAN_GROUPS.RECALL],
+      allowedStatuses: ['Verification', 'Pembuatan BAP']
+    };
+  }
+
+  // PN1 users can see their own bagian data + all 'recall-precursor' group data
+  // But only for Verification and Pembuatan BAP statuses
+  if (normalizedUser.emp_DeptID === PN1_DEPARTMENT_ID) {
+    return { 
+      scope: 'bagian_plus_group', 
+      filterByBagian: true,
+      additionalGroups: [GOLONGAN_GROUPS.RECALL_PRECURSOR],
+      allowedStatuses: ['Verification', 'Pembuatan BAP']
+    };
+  }
+
+  // Regular users can only see data from their own department (bagian)
+  // But only for Verification and Pembuatan BAP statuses
+  return { 
+    scope: 'own', 
+    filterByBagian: true,
+    additionalGroups: [],
+    allowedStatuses: ['Verification', 'Pembuatan BAP']
+  };
+};
+
+// =============================================================================
 // UTILITY FUNCTIONS FOR UI
 // =============================================================================
 
@@ -322,6 +619,8 @@ export const getUserPermissions = (user) => {
     
     // Department-based
     isFromKLDepartment: isFromKLDepartment(user),
+    isFromQADepartment: isFromQADepartment(user),
+    isFromPN1Department: isFromPN1Department(user),
     isHSEManager: isHSEManager(user),
     
     // Role-based
@@ -336,6 +635,12 @@ export const getUserPermissions = (user) => {
     // Combined
     canCreateAjuan: canCreateAjuan(user),
     shouldShowDaftarAjuanTabs: shouldShowDaftarAjuanTabs(user),
+    
+    // Verifikasi Lapangan & Pembuatan BAP
+    canSeeVerifikasiLapanganCard: canSeeVerifikasiLapanganCard(user),
+    verifikasiLapanganScope: getVerifikasiLapanganScope(user),
+    canSeePembuatanBAPCard: canSeePembuatanBAPCard(user),
+    pembuatanBAPScope: getPembuatanBAPScope(user),
   };
 };
 

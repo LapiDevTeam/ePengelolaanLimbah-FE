@@ -4,7 +4,10 @@ import { useAuth } from "../contexts/AuthContext";
 import { 
   hasDaftarAjuanApprovalAuthority,
   isHSEManager as checkIsHSEManager,
-  isFromKLDepartment 
+  isFromKLDepartment,
+  canSeeAllPermohonanTab,
+  getAllPermohonanAllowedStatuses,
+  getAllPermohonanScope
 } from "../constants/accessRights";
 
 const DaftarAjuan = ({ onNavigate, pageData }) => {
@@ -75,6 +78,15 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   // Check if user is from KL department (HSE/KL team) based solely on department ID
   const isFromKL = isFromKLDepartment(user);
 
+  // Check if user can see All Permohonan tab (all users can, but with different scope)
+  const showAllPermohonanTab = canSeeAllPermohonanTab(user);
+  
+  // Get allowed statuses for All Permohonan tab (null for KL = all, otherwise only Verification/Pembuatan BAP)
+  const allPermohonanAllowedStatuses = getAllPermohonanAllowedStatuses(user);
+  
+  // Get scope for All Permohonan (for filtering by bagian)
+  const allPermohonanScope = getAllPermohonanScope(user);
+
   const handleAddApplication = () => {
     // Navigate to form page when implemented
     if (onNavigate) {
@@ -104,12 +116,13 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
     });
   }
 
-  // Add verifikasi tab for HSE/KL team members
-  // KL users see "All Permohonan" (can view all requests)
-  if (isFromKL) {
+  // Add All Permohonan tab for all users
+  // - KL users see all statuses
+  // - Non-KL users only see Verification and Pembuatan BAP
+  if (showAllPermohonanTab) {
     tabs.push({
       id: "all-permohonan",
-      label: "All Permohonan",
+      label: isFromKL ? "All Permohonan" : "Verifikasi & Pembuatan BAP",
     });
   }
 
@@ -137,15 +150,16 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
               {activeTab === "pending-approvals" && "Daftar ajuan pemusnahan yang menunggu persetujuan Anda."}
               {activeTab === "approved" && "Daftar ajuan pemusnahan yang telah Anda setujui."}
               {activeTab === "verifikasi" && "Daftar ajuan pemusnahan yang menunggu verifikasi lapangan."}
-              {activeTab === "all-permohonan" && "Daftar semua permohonan pemusnahan (KL dapat melihat seluruh data)."}
+              {activeTab === "all-permohonan" && isFromKL && "Daftar semua permohonan pemusnahan (KL dapat melihat seluruh data)."}
+              {activeTab === "all-permohonan" && !isFromKL && "Daftar permohonan yang sedang dalam tahap Verifikasi Lapangan dan Pembuatan BAP."}
               {activeTab === "rejected" && "Daftar ajuan pemusnahan yang ditolak."}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Tab Navigation - show if user has approval authority, is HSE Manager, or from KL (HSE/KL team) */}
-      {(hasApprovalAuthority || isHSEManager || isFromKL) && (
+      {/* Tab Navigation - show if user has approval authority, is HSE Manager, from KL, or can see all permohonan tab */}
+      {(hasApprovalAuthority || isHSEManager || isFromKL || showAllPermohonanTab) && (
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
@@ -173,6 +187,8 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
         userRole={user?.role}
         currentUser={user}
         statusFilter={statusFilter}
+        allPermohonanAllowedStatuses={allPermohonanAllowedStatuses}
+        allPermohonanScope={allPermohonanScope}
       />
     </div>
   );

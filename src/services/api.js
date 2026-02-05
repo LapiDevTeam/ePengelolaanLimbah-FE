@@ -1177,9 +1177,15 @@ export const dataAPI = {
   },
 
   // Download Excel file with permohonan details by date range
-  downloadPermohonanByDateRangeExcel: async (startDate, endDate) => {
+  // golonganGroups: comma-separated string of group keys (e.g., "limbah-b3,recall") or "all" for all groups
+  downloadPermohonanByDateRangeExcel: async (startDate, endDate, golonganGroups = 'all') => {
     try {
-      const response = await api.get(`/document-generation/permohonan/range/excel?start_date=${startDate}&end_date=${endDate}`, { 
+      const params = new URLSearchParams({
+        start_date: startDate,
+        end_date: endDate,
+        golongan_groups: golonganGroups
+      });
+      const response = await api.get(`/document-generation/permohonan/range/excel?${params.toString()}`, { 
         responseType: 'arraybuffer' 
       });
       return response;

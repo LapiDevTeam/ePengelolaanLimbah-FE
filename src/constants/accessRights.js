@@ -650,6 +650,79 @@ export const getUserPermissions = (user) => {
 // Consider removing after all components are updated
 // =============================================================================
 
+// =============================================================================
+// DOWNLOAD LAMPIRAN PERMISSIONS
+// =============================================================================
+
+/**
+ * Get the download lampiran scope for a user based on selected golongan group
+ * Determines which bagian filter applies for each golongan group
+ * 
+ * Rules:
+ * - KL: All bagian for all golongan groups
+ * - QA: All bagian for 'recall', own bagian for 'limbah-b3' and 'recall-precursor'
+ * - PN1: All bagian for 'recall-precursor', own bagian for 'limbah-b3' and 'recall'
+ * - Others: Own bagian for all golongan groups
+ * 
+ * @param {object} user - User object from AuthContext
+ * @param {string} golonganGroup - The selected golongan group ('limbah-b3', 'recall', 'recall-precursor')
+ * @returns {object} { canAccessAllBagian: boolean, filterByBagian: boolean }
+ */
+export const getDownloadLampiranScopeForGroup = (user, golonganGroup) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) {
+    return { canAccessAllBagian: false, filterByBagian: true };
+  }
+
+  // KL users can access all bagian for all groups
+  if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
+    return { canAccessAllBagian: true, filterByBagian: false };
+  }
+
+  // QA users: all bagian for 'recall', own bagian for others
+  if (normalizedUser.emp_DeptID === QA_DEPARTMENT_ID) {
+    if (golonganGroup === GOLONGAN_GROUPS.RECALL) {
+      return { canAccessAllBagian: true, filterByBagian: false };
+    }
+    return { canAccessAllBagian: false, filterByBagian: true };
+  }
+
+  // PN1 users: all bagian for 'recall-precursor', own bagian for others
+  if (normalizedUser.emp_DeptID === PN1_DEPARTMENT_ID) {
+    if (golonganGroup === GOLONGAN_GROUPS.RECALL_PRECURSOR) {
+      return { canAccessAllBagian: true, filterByBagian: false };
+    }
+    return { canAccessAllBagian: false, filterByBagian: true };
+  }
+
+  // All other users: own bagian for all groups
+  return { canAccessAllBagian: false, filterByBagian: true };
+};
+
+/**
+ * Get available golongan groups for download lampiran
+ * KL can multi-select, others single-select
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {object} { availableGroups: string[], canMultiSelect: boolean }
+ */
+export const getDownloadLampiranOptions = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) {
+    return { availableGroups: [], canMultiSelect: false };
+  }
+
+  const allGroups = [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR];
+
+  // KL users can multi-select and have access to all groups
+  if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
+    return { availableGroups: allGroups, canMultiSelect: true };
+  }
+
+  // All other users have single-select but can see all groups
+  return { availableGroups: allGroups, canMultiSelect: false };
+};
+
 /**
  * @deprecated Use hasDaftarAjuanApprovalAuthority instead
  */

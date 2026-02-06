@@ -286,7 +286,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
     const groupLabels = {
       'limbah-b3': 'Limbah B3',
       'recall': 'Recall',
-      'recall-precursor': 'Recall (Precursor & OOT)'
+      'recall-precursor': 'Precursor & OOT'
     }
     
     const hasAnyCount = Object.values(groupCounts).some(count => count > 0)
@@ -549,7 +549,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
                       onClick={() => onNavigate && onNavigate('berita-acara', { group: 'recall-precursor', pageAlias: 'berita-acara-recall-precursor-oot', viewMode: 'pending-approval' })}
                       className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded px-2 py-1 transition-colors"
                     >
-                      <span>Recall (Precursor & OOT)</span>
+                      <span>Precursor & OOT</span>
                       <span className="font-semibold">{pendingApprovalByGroup['recall-precursor']}</span>
                     </button>
                   )}

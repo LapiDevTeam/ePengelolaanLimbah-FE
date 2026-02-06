@@ -46,11 +46,21 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
     }
   };
 
+  const getBreadCrumb = () => {
+    if (group === 'limbah-b3') {
+      return 'Limbah B3';
+    } else if (group === 'recall') {
+      return 'Recall';
+    } else if (group === 'recall-precursor') {
+      return 'Precursor & OOT';
+    }
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6">
         <nav className="text-sm text-gray-500 mb-2">
-          <span>Limbah B3</span>
+          <span>{getBreadCrumb() || ''}</span>
           <span className="mx-2">›</span>
           <span className="text-gray-900">Berita Acara Pemusnahan</span>
         </nav>

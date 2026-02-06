@@ -13,6 +13,9 @@ import {
 const DaftarAjuan = ({ onNavigate, pageData }) => {
   const { user } = useAuth();
   
+  // Extract group from pageData
+  const group = pageData?.group || 'limbah-b3'; // default to limbah-b3
+  
   // Map viewMode from Dashboard to activeTab
   const getInitialTab = () => {
     if (pageData?.viewMode) {
@@ -29,6 +32,18 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
       return viewModeMap[pageData.viewMode] || 'my-requests';
     }
     return 'my-requests';
+  };
+  
+  // Get breadcrumb label based on group
+  const getBreadcrumb = () => {
+    if (group === 'limbah-b3') {
+      return 'Limbah B3';
+    } else if (group === 'recall') {
+      return 'Recall';
+    } else if (group === 'recall-precursor') {
+      return 'Precursor & OOT';
+    }
+    return 'Limbah B3'; // fallback
   };
   
   const [activeTab, setActiveTab] = useState(getInitialTab());
@@ -138,7 +153,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
     <div className="p-6">
       <div className="mb-6">
         <nav className="text-sm text-gray-500 mb-2">
-          <span>Limbah B3</span>
+          <span>{getBreadcrumb()}</span>
           <span className="mx-2">›</span>
           <span className="text-gray-900">Daftar Ajuan Pemusnahan</span>
         </nav>

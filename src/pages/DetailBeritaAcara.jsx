@@ -24,6 +24,27 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
   const [verificationTimeRange, setVerificationTimeRange] = useState({ start: null, end: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Extract group from navigationData (prioritize direct group, then from.group)
+  const group = navigationData?.group || navigationData?.from?.group || 'limbah-b3'; // default to limbah-b3
+  
+  // Get breadcrumb label based on group
+  const getBreadcrumb = () => {
+    if (group === 'limbah-b3') {
+      return 'Limbah B3';
+    } else if (group === 'recall') {
+      return 'Recall';
+    } else if (group === 'recall-precursor') {
+      return 'Precursor & OOT';
+    }
+    return 'Limbah B3'; // fallback
+  };
+  
+  // Get dynamic description
+  const getDescription = () => {
+    const breadcrumb = getBreadcrumb().toLowerCase();
+    return `Detail informasi berita acara pemusnahan ${breadcrumb}.`;
+  };
   const [signingWorkflow, setSigningWorkflow] = useState([]);
   const [canSign, setCanSign] = useState(false);
   const [beritaAcaraLoading, setBeritaAcaraLoading] = useState(false);
@@ -665,7 +686,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
       <div className="mb-6">
         <nav className="text-sm text-gray-500 mb-2">
           <button onClick={handleBack} className="text-gray-500 hover:text-gray-700">
-            Limbah B3
+            {getBreadcrumb()}
           </button>
           <span className="mx-2">›</span>
           <span className="text-gray-900">Detail Berita Acara Pemusnahan</span>
@@ -673,7 +694,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Detail Berita Acara Pemusnahan</h1>
-            <p className="mt-2 text-gray-600">Detail informasi berita acara pemusnahan limbah B3.</p>
+            <p className="mt-2 text-gray-600">{getDescription()}</p>
           </div>
           <div className="flex gap-3">
             {data?.status === "Completed" && (

@@ -32,6 +32,27 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
   const [rawApiData, setRawApiData] = useState(null); // Store raw API data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Extract group from navigationData (prioritize direct group, then from.group)
+  const group = navigationData?.group || navigationData?.from?.group || 'limbah-b3'; // default to limbah-b3
+  
+  // Get breadcrumb label based on group
+  const getBreadcrumb = () => {
+    if (group === 'limbah-b3') {
+      return 'Limbah B3';
+    } else if (group === 'recall') {
+      return 'Recall';
+    } else if (group === 'recall-precursor') {
+      return 'Precursor & OOT';
+    }
+    return 'Limbah B3'; // fallback
+  };
+  
+  // Get dynamic description
+  const getDescription = () => {
+    const breadcrumb = getBreadcrumb().toLowerCase();
+    return `Detail informasi ajuan pemusnahan ${breadcrumb}.`;
+  };
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [showFieldVerificationModal, setShowFieldVerificationModal] = useState(false);
   const [permohonanLoading, setPermohonanLoading] = useState(false);
@@ -337,7 +358,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
             onClick={handleBack}
             className="text-gray-500 hover:text-gray-700"
           >
-            Limbah B3
+            {getBreadcrumb()}
           </button>
           <span className="mx-2">›</span>
           <span className="text-gray-900">Detail Ajuan Pemusnahan</span>
@@ -345,7 +366,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Detail Ajuan Pemusnahan</h1>
-            <p className="mt-2 text-gray-600">Detail informasi ajuan pemusnahan limbah B3.</p>
+            <p className="mt-2 text-gray-600">{getDescription()}</p>
           </div>
           <div className="flex gap-3">
             {/* Show Download Label together with Verifikasi Lapangan when verification step is active */}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import BeritaAcaraDataTable from "../components/BeritaAcaraDataTable";
 import { useAuth } from "../contexts/AuthContext";
+import { canCreateBeritaAcaraByDeptLevel } from "../constants/accessRights";
 import { dataAPI } from "../services/api";
 import { showInfo } from "../utils/sweetAlert";
 
@@ -9,9 +10,24 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
   const [isCreatorAllowed, setIsCreatorAllowed] = useState(false);
   const [creatorCheckLoading, setCreatorCheckLoading] = useState(true);
 
-  // Only show "Tambah Berita Acara" to users who are registered as Appr_No=1 in KL
+  // Show "Tambah Berita Acara" to:
+  // 1. Users with dept+jobLevel allowed for this group (central config in accessRights.js)
+  //    - QA (ofc/spv/mgr): only for 'recall'
+  //    - PN1 (ofc/spv/mgr): only for 'recall-precursor'
+  // 2. KL officers registered as Appr_No=1 (external approval API) — all groups
   useEffect(() => {
     let mounted = true;
+
+    // Check centralized dept + job level + group permission first
+    if (canCreateBeritaAcaraByDeptLevel(user, group)) {
+      if (mounted) {
+        setIsCreatorAllowed(true);
+        setCreatorCheckLoading(false);
+      }
+      return () => { mounted = false; };
+    }
+
+    // Fallback: check KL officer via external approval API (all groups)
     const checkCreator = async () => {
       setCreatorCheckLoading(true);
       try {
@@ -35,7 +51,7 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
 
     checkCreator();
     return () => { mounted = false; };
-  }, [user]);
+  }, [user, group]);
 
   const handleAddBeritaAcara = () => {
     // Navigate to form page with group context

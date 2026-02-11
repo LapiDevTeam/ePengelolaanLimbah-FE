@@ -3,7 +3,7 @@ import { dataAPI } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toJakartaIsoFromLocal, formatDateID, formatDateTimeID, formatTimeID, formatTimeHHMM } from "../utils/time";
 import { showSuccess, showError, showWarning, showInfo, showConfirmation } from "../utils/sweetAlert";
-import { isPemohon as checkIsPemohon } from "../constants/accessRights";
+import { isPemohon as checkIsPemohon, canCreateBeritaAcaraByDeptLevel } from "../constants/accessRights";
 
 // Simple CSS icons as components
 const ChevronDownIcon = () => (
@@ -115,9 +115,22 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     }
   }, [user]);
 
-  // Check if current user is allowed to create Berita Acara (Appr_No=1 and Appr_DeptID='KL')
+  // Check if current user is allowed to create Berita Acara
+  // 1. Dept+level+group check (QA->recall, PN1->recall-precursor)
+  // 2. Fallback: KL officer via external approval API (all groups)
   useEffect(() => {
     let mounted = true;
+
+    // Check centralized dept + job level + group permission first
+    if (canCreateBeritaAcaraByDeptLevel(user, group)) {
+      if (mounted) {
+        setIsCreatorAllowed(true);
+        setCreatorCheckLoading(false);
+      }
+      return () => { mounted = false; };
+    }
+
+    // Fallback: KL officer via external approval API
     const checkCreator = async () => {
       setCreatorCheckLoading(true);
       try {
@@ -141,7 +154,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
 
     checkCreator();
     return () => { mounted = false; };
-  }, [user]);
+  }, [user, group]);
 
   // Reset daftar pemusnahan when bagian or date range changes
   useEffect(() => {

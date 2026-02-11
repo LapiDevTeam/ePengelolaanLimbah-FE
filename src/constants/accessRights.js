@@ -56,6 +56,29 @@ export const QA_DEPARTMENT_ID = "QA";
 export const PN1_DEPARTMENT_ID = "PN1";
 
 // =============================================================================
+// BERITA ACARA CREATOR SETTINGS
+// =============================================================================
+
+/**
+ * Job levels allowed to create Berita Acara (BAP)
+ * Combined with department-to-group mapping to determine access
+ */
+export const BAP_CREATOR_ALLOWED_JOB_LEVELS = ["ofc", "spv", "mgr"];
+
+/**
+ * Mapping of department to the golongan groups they can create BAP for.
+ * - KL: handled via external approval API (all groups) — not listed here
+ * - QA: can only create BAP for 'recall'
+ * - PN1: can only create BAP for 'recall-precursor'
+ * 
+ * To add a new dept, add an entry: "DEPT_ID": ["group1", "group2"]
+ */
+export const BAP_CREATOR_DEPT_GROUP_MAP = {
+  QA: ["recall"],
+  PN1: ["recall-precursor"],
+};
+
+// =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 
@@ -71,6 +94,7 @@ const normalizeUser = (user) => {
     log_NIK: user.log_NIK || null,
     Jabatan: user.Jabatan || null,
     emp_DeptID: user.emp_DeptID ? String(user.emp_DeptID).toUpperCase() : null,
+    emp_JobLevelID: user.emp_JobLevelID ? String(user.emp_JobLevelID).toLowerCase() : null,
   };
 };
 
@@ -123,6 +147,44 @@ export const hasBeritaAcaraApprovalAuthority = (user) => {
   }
 
   return false;
+};
+
+/**
+ * Check if user can create Berita Acara (BAP) based on department + job level + golongan group.
+ * This is a synchronous/local check. The KL officer check via external approval API
+ * is handled separately in the component.
+ * 
+ * Rules:
+ * - User's emp_DeptID must be in BAP_CREATOR_DEPT_GROUP_MAP
+ * - User's emp_JobLevelID must be in BAP_CREATOR_ALLOWED_JOB_LEVELS
+ * - If group is provided, the group must be in the dept's allowed groups
+ * - If group is not provided, returns true if dept+level match (any group)
+ * 
+ * Used in: BeritaAcara.jsx, FormBeritaAcara.jsx
+ * 
+ * @param {object} user - User object from AuthContext
+ * @param {string} [group] - The current golongan group (e.g. 'limbah-b3', 'recall', 'recall-precursor')
+ * @returns {boolean} True if user can create BAP by dept+level for the given group
+ */
+export const canCreateBeritaAcaraByDeptLevel = (user, group) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) return false;
+
+  // Check job level first
+  const levelAllowed = normalizedUser.emp_JobLevelID && BAP_CREATOR_ALLOWED_JOB_LEVELS.includes(normalizedUser.emp_JobLevelID);
+  if (!levelAllowed) return false;
+
+  // Check department is in the mapping
+  const allowedGroups = normalizedUser.emp_DeptID && BAP_CREATOR_DEPT_GROUP_MAP[normalizedUser.emp_DeptID];
+  if (!allowedGroups) return false;
+
+  // If group is specified, check if dept is allowed for that specific group
+  if (group) {
+    return allowedGroups.includes(group);
+  }
+
+  // No group specified — dept+level match is enough
+  return true;
 };
 
 // =============================================================================
@@ -634,6 +696,7 @@ export const getUserPermissions = (user) => {
     
     // Combined
     canCreateAjuan: canCreateAjuan(user),
+    canCreateBeritaAcaraByDeptLevel: (group) => canCreateBeritaAcaraByDeptLevel(user, group),
     shouldShowDaftarAjuanTabs: shouldShowDaftarAjuanTabs(user),
     
     // Verifikasi Lapangan & Pembuatan BAP

@@ -18,6 +18,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [selectedLogbookGroup, setSelectedLogbookGroup] = useState('limbah-b3')
   const [startDatePermohonan, setStartDatePermohonan] = useState('')
   const [endDatePermohonan, setEndDatePermohonan] = useState('')
   const [isDownloadingPermohonan, setIsDownloadingPermohonan] = useState(false)
@@ -130,7 +131,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
     setIsGenerating(true)
     
     try {
-      const result = await api.downloadLogbookExcel(startDate, endDate)
+      const result = await api.downloadLogbookExcel(startDate, endDate, selectedLogbookGroup)
       
       if (!result.data.success) {
         throw new Error(result.data.message || 'Failed to generate logbook')
@@ -144,7 +145,9 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = url
-      a.download = `logbook-limbah-b3-${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}.xlsx`
+      const groupLabelMap = { 'limbah-b3': 'Limbah_B3', 'recall': 'Recall', 'recall-precursor': 'Precursor_&_OOT', 'all': 'Semua_Golongan' }
+      const fileLabel = groupLabelMap[selectedLogbookGroup] || 'Semua_Golongan'
+      a.download = `logbook-${fileLabel}-${startDate.replace(/-/g, '')}-${endDate.replace(/-/g, '')}.xlsx`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -811,7 +814,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
       {isFromKL && (
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h2 className="text-xl font-semibold text-blue-800 mb-4">Generate Logbook</h2>        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div>
             <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
               Tanggal Mulai
@@ -836,6 +839,22 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+          </div>
+
+          <div>
+            <label htmlFor="logbook-group" className="block text-sm font-medium text-gray-700 mb-2">
+              Golongan
+            </label>
+            <select
+              id="logbook-group"
+              value={selectedLogbookGroup}
+              onChange={(e) => setSelectedLogbookGroup(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value="limbah-b3">Limbah B3</option>
+              <option value="recall">Recall</option>
+              <option value="recall-precursor">Precursor &amp; OOT</option>
+            </select>
           </div>
           
           <div>
@@ -863,6 +882,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
           <p>• Logbook akan mengelompokkan data berdasarkan jenis limbah</p>
           <p>• Setiap jenis limbah akan memiliki sheet terpisah</p>
           <p>• Data diambil dari permohonan dengan status Completed</p>
+          <p>• Pilih golongan untuk memfilter data, atau pilih "Semua Golongan" untuk semua data</p>
           <p className="font-semibold">• Fitur ini hanya tersedia untuk user KL</p>
         </div>
       </div>

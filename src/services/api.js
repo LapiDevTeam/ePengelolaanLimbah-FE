@@ -1153,9 +1153,10 @@ export const dataAPI = {
   },
 
   // Download Excel logbook file grouped by jenis limbah
-  downloadLogbookExcel: async (startDate, endDate) => {
+  // golonganGroup: single group key ('limbah-b3', 'recall', 'recall-precursor') or 'all'
+  downloadLogbookExcel: async (startDate, endDate, golonganGroup = 'all') => {
     try {
-      const response = await api.get(`/document-generation/logbook/excel?start_date=${startDate}&end_date=${endDate}`, { 
+      const response = await api.get(`/document-generation/logbook/excel?start_date=${startDate}&end_date=${endDate}&golongan_group=${golonganGroup}`, { 
         responseType: 'arraybuffer' 
       });
       return {

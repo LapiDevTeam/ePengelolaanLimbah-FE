@@ -630,8 +630,12 @@ export default function FormBeritaAcaraContent({
                   verticalAlign: 'top'
                 }}>
                   <div>Paraf/Tgl</div>
-                  <div style={{ height: '64px' }}>
-                    {/* Empty space for BBOM/BPOM - no N/A */}
+                  <div style={{ height: '64px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    {/* Kosong (tempat tanda tangan fisik) hanya untuk recall/precursor.
+                        Untuk limbah-b3, tampilkan N/A karena BPOM tidak relevan. */}
+                    {!data.show_bpom && (
+                      <div style={{ textAlign: 'center' }}>N/A</div>
+                    )}
                   </div>
                   <div style={{ textAlign: 'center' }}>BBOM/BPOM*</div>
                 </td>

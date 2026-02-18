@@ -143,7 +143,8 @@ export const dataAPI = {
               // New fields from enhanced API response
               golonganGroup: item.golonganGroup || null,
               isPendingForCurrentUser: item.isPendingForCurrentUser || false,
-              canCurrentUserApprove: item.canCurrentUserApprove || false
+              canCurrentUserApprove: item.canCurrentUserApprove || false,
+              bap_status: item.bap_status || null
             })),
             pagination: response.data.pagination
           }

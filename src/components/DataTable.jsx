@@ -653,6 +653,11 @@ const DataTable = ({
                     >
                       {getStatusDisplayName(item.status, item.currentStepLevel)}
                     </span>
+                    {viewMode === 'my-requests' && item.status === 'Completed' && item.bap_status && item.bap_status !== 'Completed' && (
+                      <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700">
+                        BAP: {item.bap_status}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex items-center gap-2">

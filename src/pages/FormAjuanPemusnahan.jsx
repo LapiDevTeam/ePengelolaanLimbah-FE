@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { dataAPI } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toJakartaIsoFromLocal, formatDateID } from "../utils/time";
@@ -29,7 +29,8 @@ import {
   getJenisDisplayName, 
   getStatusDisplayName, 
   DEFAULT_JENIS_OPTIONS,
-  DEFAULT_GOLONGAN_OPTIONS
+  DEFAULT_GOLONGAN_OPTIONS,
+  getFilteredJenisOptions
 } from "../constants/referenceData";
 import { useConfigContext } from "../contexts/ConfigContext";
 
@@ -281,8 +282,39 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
     }
   }, [editId, referenceLoading]);
 
+  // Compute filtered jenis options based on currently selected golongan
+  const selectedGolonganLabel = useMemo(() => {
+    const match = golonganOptions.find(g => g.value === form.golonganLimbah);
+    return match ? match.label : '';
+  }, [form.golonganLimbah, golonganOptions]);
+
+  const filteredJenisOptions = useMemo(
+    () => getFilteredJenisOptions(selectedGolonganLabel, jenisOptions),
+    [selectedGolonganLabel, jenisOptions]
+  );
+
   const handleFormChange = e => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === 'golonganLimbah') {
+      // When golongan changes, check if the currently selected jenis is still
+      // valid for the new golongan. If not, reset it.
+      const newGolonganLabel = golonganOptions.find(g => g.value === value)?.label || '';
+      const newFiltered = getFilteredJenisOptions(newGolonganLabel, jenisOptions);
+      const currentJenisStillValid = newFiltered.some(opt => opt.value === form.jenisLimbah);
+
+      setForm(prev => ({
+        ...prev,
+        golonganLimbah: value,
+        // Reset jenis if no longer valid in the new golongan
+        ...(currentJenisStillValid ? {} : { jenisLimbah: '' }),
+        // Also reset isProdukPangan when golongan changes away from Recall
+        ...(newGolonganLabel !== 'Recall' ? { isProdukPangan: false } : {})
+      }));
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
   };
 
   const handleBentukChange = selectedBentuk => {
@@ -888,7 +920,7 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
                 onChange={handleFormChange}
               >
                 <option value="">- Pilih Jenis -</option>
-                {jenisOptions.map(opt => (
+                {filteredJenisOptions.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>

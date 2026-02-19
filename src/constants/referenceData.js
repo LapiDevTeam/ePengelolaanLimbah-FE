@@ -29,6 +29,7 @@ export const DEFAULT_JENIS_OPTIONS = [
   { value: "A102d Aki/Baterai bekas", label: "(A102d) Aki/Baterai bekas", kode_limbah: "A102d", jenis_limbah: "Aki/Baterai bekas" },
   { value: "A106d Limbah laboratorium (HPLC)", label: "(A106d) Limbah laboratorium (HPLC)", kode_limbah: "A106d", jenis_limbah: "Limbah laboratorium (HPLC)" },
   { value: "A106d Sisa destruksi", label: "(A106d) Sisa destruksi", kode_limbah: "A106d", jenis_limbah: "Sisa destruksi" },
+  { value: "A106d Media Fill", label: "(A106d) Media Fill", kode_limbah: "A106d", jenis_limbah: "Media Fill" },
   { value: "B110d Kain Majun dan sejenisnya", label: "(B110d) Kain Majun dan sejenisnya", kode_limbah: "B110d", jenis_limbah: "Kain Majun dan sejenisnya" },
   { value: "A108d Limbah terkontaminasi B3", label: "(A108d) Limbah terkontaminasi B3", kode_limbah: "A108d", jenis_limbah: "Limbah terkontaminasi B3" },
   { value: "B105d Minyak Pelumas/Oli bekas", label: "(B105d) Minyak Pelumas/Oli bekas", kode_limbah: "B105d", jenis_limbah: "Minyak Pelumas/Oli bekas" },
@@ -39,6 +40,62 @@ export const DEFAULT_JENIS_OPTIONS = [
   { value: "B104d Kemasan bekas B3", label: "(B104d) Kemasan bekas B3", kode_limbah: "B104d", jenis_limbah: "Kemasan bekas B3" },
   { value: "Lain-lain", label: "Lain-lain", kode_limbah: "Lain-lain", jenis_limbah: "Lain-lain" }
 ];
+
+/**
+ * Mapping from golongan limbah label (case-insensitive) to the allowed
+ * jenis_limbah names (the part after the kode, e.g. "Produk antara").
+ *
+ * - Golongan not listed here → show ALL jenis options (no filter).
+ * - Matching is done on the `jenis_limbah` field of each option (case-insensitive).
+ */
+export const GOLONGAN_JENIS_FILTER_MAP = {
+  'Sisa Analisa Lab': [
+    'Produk antara',
+    'Produk ruahan',
+    'Produk setengah jadi',
+    'Produk jadi',
+    'Limbah laboratorium (HPLC)',
+  ],
+  'Limbah mikrobiologi': [
+    'Sisa destruksi',
+    'Media fill',
+  ],
+  'Lain-lain': [
+    'Bahan Kimia kadaluwarsa',
+    'Sludge dari IPAL',
+    'Aki/Baterai bekas',
+    'Limbah terkontaminasi B3',
+    'Minyak Pelumas/Oli bekas',
+    'Cartridge',
+    'Filter dan Prefilter',
+    'Lampu TL',
+    'Elektronik',
+    'Kemasan bekas B3',
+  ],
+};
+
+/**
+ * Given a golongan label and the full jenisOptions array, return only the
+ * jenis options that are allowed for that golongan.
+ * If golongan is not in the map, returns the full list (unfiltered).
+ */
+export const getFilteredJenisOptions = (golonganLabel, jenisOptions = DEFAULT_JENIS_OPTIONS) => {
+  if (!golonganLabel) return jenisOptions;
+
+  // Find the matching key (case-insensitive)
+  const mapKey = Object.keys(GOLONGAN_JENIS_FILTER_MAP).find(
+    key => key.toLowerCase() === golonganLabel.toLowerCase()
+  );
+
+  if (!mapKey) return jenisOptions; // golongan not in map → show all
+
+  const allowedNames = GOLONGAN_JENIS_FILTER_MAP[mapKey].map(n => n.toLowerCase());
+
+  return jenisOptions.filter(opt => {
+    const jenisName = (opt.jenis_limbah || '').toLowerCase();
+    return allowedNames.includes(jenisName);
+  });
+};
 
 // Utility function to get display name for jenis without the code
 export const getJenisDisplayName = (jenisValue, jenisOptions = DEFAULT_JENIS_OPTIONS) => {

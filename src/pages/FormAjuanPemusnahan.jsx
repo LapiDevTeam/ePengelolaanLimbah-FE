@@ -231,7 +231,7 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
             bagian: data?.bagian || "",
             tanggalPengajuan: data?.created_at ? (data.created_at.split('T')[0]) : getLocalDateISO(),
             noPermohonan: data?.request_id?.toString() || "",
-            jumlahItem: data?.jumlah_item?.toString() || (data?.DetailLimbahs?.length?.toString() || "0"),
+            jumlahItem: data?.DetailLimbahs?.length?.toString() || (data?.jumlah_item?.toString() || "0"),
             jumlahWadah: "", // Will be calculated
             bobotTotal: "", // Will be calculated
             golonganLimbah: getValueFromId(data?.golongan_limbah_id, golonganOptions),
@@ -368,15 +368,8 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
 
   // Auto-calculate summary fields based on detail items
   const updateSummaryFields = (detailItems) => {
-    // jumlahItem should be the number of unique pairs of (namaLimbah, noBets)
-    const pairSet = new Set();
-    detailItems.forEach(detail => {
-      const name = (detail.namaLimbah || '').toString().trim();
-      const bets = (detail.noBets || '').toString().trim();
-      // Use a separator unlikely to appear in values
-      pairSet.add(`${name}|||${bets}`);
-    });
-    const jumlahItem = pairSet.size;
+    // jumlahItem is the total number of detail/lampiran rows
+    const jumlahItem = detailItems.length;
     
     // Calculate jumlahWadah from unique noWadah values
     const uniqueWadah = new Set();
@@ -393,7 +386,7 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
 
     setForm(prev => ({
       ...prev,
-      // jumlahItem is read-only from backend; do not override it locally
+      jumlahItem: jumlahItem.toString(),
       jumlahWadah: jumlahWadah.toString(),
       bobotTotal: bobotTotal.toString()
     }));

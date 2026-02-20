@@ -150,9 +150,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
           bentuk: apiData.bentuk_limbah || "Unknown",
           bagian: apiData.bagian || "Unknown",
           tanggalPengajuan: apiData.created_at ? formatDateID(apiData.created_at) : "",
-          jumlahItem: (apiData.jumlah_item !== undefined && apiData.jumlah_item !== null)
-            ? apiData.jumlah_item.toString()
-            : (apiData.DetailLimbahs ? apiData.DetailLimbahs.length.toString() : "0"),
+          jumlahItem: apiData.DetailLimbahs ? apiData.DetailLimbahs.length.toString() : (apiData.jumlah_item?.toString() || "0"),
           jumlahWadah: apiData.DetailLimbahs ? (() => {
             const uniqueWadah = new Set();
             apiData.DetailLimbahs.forEach(detail => {

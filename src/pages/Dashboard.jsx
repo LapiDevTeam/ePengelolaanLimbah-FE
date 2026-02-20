@@ -14,6 +14,21 @@ import {
 } from "../constants/accessRights"
 
 const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 } }) => {
+
+  /**
+   * Get display position for a user.
+   * If Jabatan exists, use it. Otherwise:
+   * - If log_NIK === "PJKPO" → show "PJKPO"
+   * - If log_NIK starts with "APJ" (e.g. APJ4) → show "APJ"
+   */
+  const getDisplayPosition = (userData) => {
+    if (!userData) return 'N/A';
+    if (userData.Jabatan) return userData.Jabatan;
+    const nik = (userData.log_NIK || '').toUpperCase();
+    if (nik === 'PJKPO') return 'PJKPO';
+    if (nik.startsWith('APJ')) return 'APJ';
+    return 'N/A';
+  };
   const { user, fetchProfile } = useAuth()
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -639,7 +654,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
           <div className="space-y-3">
             <div>
               <label className="text-sm font-medium text-gray-500">Position</label>
-              <p className="text-gray-900">{user?.Jabatan || 'N/A'}</p>
+              <p className="text-gray-900">{getDisplayPosition(user)}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Department</label>
@@ -666,7 +681,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Position</label>
-                  <p className="text-gray-900">{user.delegatedTo.Jabatan || 'N/A'}</p>
+                  <p className="text-gray-900">{getDisplayPosition(user.delegatedTo)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Department</label>

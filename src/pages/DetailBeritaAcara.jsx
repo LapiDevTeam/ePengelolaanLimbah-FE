@@ -12,6 +12,7 @@ import {
   DEFAULT_JENIS_OPTIONS,
   DEFAULT_GOLONGAN_OPTIONS,
 } from "../constants/referenceData";
+import { getDownloadLampiranOptions } from "../constants/accessRights";
 import SigningWorkflowSteps from "../components/SigningWorkflowSteps";
 import { showSuccess, showError, showConfirmation } from "../utils/sweetAlert";
 
@@ -50,6 +51,11 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
   const [beritaAcaraLoading, setBeritaAcaraLoading] = useState(false);
   const [excelLoadingStates, setExcelLoadingStates] = useState({});
   const [permohonanLoadingStates, setPermohonanLoadingStates] = useState({});
+
+  // Determine if the Aksi column should be shown
+  // KL → always, APJ QA → recall only, APJ PN1 → precursor only
+  const downloadLampiranOpts = getDownloadLampiranOptions(user);
+  const showAksiColumn = downloadLampiranOpts.visible && downloadLampiranOpts.availableGroups.includes(group);
 
   useEffect(() => {
   }, [verificationTimeRange]);
@@ -826,9 +832,11 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
                   <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                     Alasan Pemusnahan
                   </th>
+                  {showAksiColumn && (
                   <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
                     Aksi
                   </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -841,6 +849,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.jumlahItem}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{item.bobotTotal}</td>
                     <td className="px-4 py-4 text-sm text-gray-900">{item.alasanPemusnahan}</td>
+                    {showAksiColumn && (
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center justify-center gap-2">
                         <button
@@ -879,6 +888,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
                         </button>
                       </div>
                     </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

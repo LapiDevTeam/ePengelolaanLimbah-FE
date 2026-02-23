@@ -763,27 +763,40 @@ export const getDownloadLampiranScopeForGroup = (user, golonganGroup) => {
 };
 
 /**
- * Get available golongan groups for download lampiran
- * KL can multi-select, others single-select
+ * Get available golongan groups for download lampiran.
+ * 
+ * Visibility rules:
+ * - KL department        → visible, multi-select, all groups
+ * - APJ role + QA dept   → visible, single-select, only 'recall'
+ * - APJ role + PN1 dept  → visible, single-select, only 'recall-precursor'
+ * - Everyone else        → NOT visible
  * 
  * @param {object} user - User object from AuthContext
- * @returns {object} { availableGroups: string[], canMultiSelect: boolean }
+ * @returns {object} { visible: boolean, availableGroups: string[], canMultiSelect: boolean }
  */
 export const getDownloadLampiranOptions = (user) => {
   const normalizedUser = normalizeUser(user);
   if (!normalizedUser) {
-    return { availableGroups: [], canMultiSelect: false };
+    return { visible: false, availableGroups: [], canMultiSelect: false };
   }
 
   const allGroups = [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR];
 
   // KL users can multi-select and have access to all groups
   if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
-    return { availableGroups: allGroups, canMultiSelect: true };
+    return { visible: true, availableGroups: allGroups, canMultiSelect: true };
   }
 
-  // All other users have single-select but can see all groups
-  return { availableGroups: allGroups, canMultiSelect: false };
+  // Non-KL users: use the same dept + job level logic as "Tambah Berita Acara" button
+  // (canCreateBeritaAcaraByDeptLevel). This checks BAP_CREATOR_DEPT_GROUP_MAP + BAP_CREATOR_ALLOWED_JOB_LEVELS.
+  // e.g. QA (ofc/spv/mgr) → recall only, PN1 (ofc/spv/mgr) → recall-precursor only
+  if (canCreateBeritaAcaraByDeptLevel(user)) {
+    const deptGroups = BAP_CREATOR_DEPT_GROUP_MAP[normalizedUser.emp_DeptID] || [];
+    return { visible: true, availableGroups: deptGroups, canMultiSelect: false };
+  }
+
+  // All other users cannot see download lampiran
+  return { visible: false, availableGroups: [], canMultiSelect: false };
 };
 
 /**

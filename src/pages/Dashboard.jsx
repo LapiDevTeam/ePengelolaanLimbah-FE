@@ -693,7 +693,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         )}
       </div>
 
-      {/* Download Lampiran Permohonan Section */}
+      {/* Download Lampiran Permohonan Section - Only visible for KL, APJ QA, APJ PN1 */}
+      {downloadLampiranOptions.visible && (
       <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
         <h2 className="text-xl font-semibold text-green-800 mb-4">Download Lampiran Permohonan</h2>
         
@@ -736,16 +737,23 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
               })}
             </div>
           ) : (
-            // Single-select dropdown for non-KL users
+            // Single-select dropdown for APJ QA / APJ PN1 users (only their allowed groups)
             <select
               value={selectedGolonganGroups[0] || ''}
               onChange={(e) => setSelectedGolonganGroups(e.target.value ? [e.target.value] : [])}
               className="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
               <option value="">-- Pilih Golongan --</option>
-              <option value="limbah-b3">Limbah B3</option>
-              <option value="recall">Recall</option>
-              <option value="recall-precursor">Precursor & OOT</option>
+              {downloadLampiranOptions.availableGroups.map((group) => {
+                const groupLabels = {
+                  'limbah-b3': 'Limbah B3',
+                  'recall': 'Recall',
+                  'recall-precursor': 'Precursor & OOT'
+                }
+                return (
+                  <option key={group} value={group}>{groupLabels[group]}</option>
+                )
+              })}
             </select>
           )}
         </div>
@@ -804,26 +812,14 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
           <p>• Satu baris per detail limbah dengan informasi permohonan</p>
           {isFromKL ? (
             <p className="font-semibold">• User KL: Dapat mendownload data dari semua bagian untuk semua golongan</p>
-          ) : (
-            <>
-              <p className="font-semibold">• User {userDepartment || 'Non-KL'}:</p>
-              {userDepartment === 'QA' ? (
-                <>
-                  <p className="ml-4">- Recall: Dapat melihat semua bagian</p>
-                  <p className="ml-4">- Limbah B3 & Precursor: Hanya bagian {userDepartment}</p>
-                </>
-              ) : userDepartment === 'PN1' ? (
-                <>
-                  <p className="ml-4">- Precursor & OOT: Dapat melihat semua bagian</p>
-                  <p className="ml-4">- Limbah B3 & Recall: Hanya bagian {userDepartment}</p>
-                </>
-              ) : (
-                <p className="ml-4">- Semua golongan: Hanya bagian {userDepartment}</p>
-              )}
-            </>
-          )}
+          ) : userDepartment === 'QA' ? (
+            <p className="font-semibold">• APJ QA: Dapat mendownload lampiran golongan Recall</p>
+          ) : userDepartment === 'PN1' ? (
+            <p className="font-semibold">• APJ PN1: Dapat mendownload lampiran golongan Precursor & OOT</p>
+          ) : null}
         </div>
       </div>
+      )}
 
       {/* Generate Logbook Section - Only visible for KL users */}
       {isFromKL && (

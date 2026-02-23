@@ -77,23 +77,36 @@ export const GOLONGAN_JENIS_FILTER_MAP = {
 /**
  * Given a golongan label and the full jenisOptions array, return only the
  * jenis options that are allowed for that golongan.
- * If golongan is not in the map, returns the full list (unfiltered).
+ *
+ * - No golongan selected          → empty array (select is disabled)
+ * - Golongan listed in the map     → only its explicitly mapped jenis
+ * - Golongan NOT listed in the map → only jenis NOT claimed by ANY mapped golongan
  */
 export const getFilteredJenisOptions = (golonganLabel, jenisOptions = DEFAULT_JENIS_OPTIONS) => {
-  if (!golonganLabel) return jenisOptions;
+  if (!golonganLabel) return []; // no golongan → no jenis available
 
   // Find the matching key (case-insensitive)
   const mapKey = Object.keys(GOLONGAN_JENIS_FILTER_MAP).find(
     key => key.toLowerCase() === golonganLabel.toLowerCase()
   );
 
-  if (!mapKey) return jenisOptions; // golongan not in map → show all
+  if (mapKey) {
+    // Golongan is in the map → show only its allowed jenis
+    const allowedNames = GOLONGAN_JENIS_FILTER_MAP[mapKey].map(n => n.toLowerCase());
+    return jenisOptions.filter(opt => {
+      const jenisName = (opt.jenis_limbah || '').toLowerCase();
+      return allowedNames.includes(jenisName);
+    });
+  }
 
-  const allowedNames = GOLONGAN_JENIS_FILTER_MAP[mapKey].map(n => n.toLowerCase());
+  // Golongan NOT in the map → show only jenis NOT claimed by any mapped golongan
+  const allClaimedNames = Object.values(GOLONGAN_JENIS_FILTER_MAP)
+    .flat()
+    .map(n => n.toLowerCase());
 
   return jenisOptions.filter(opt => {
     const jenisName = (opt.jenis_limbah || '').toLowerCase();
-    return allowedNames.includes(jenisName);
+    return !allClaimedNames.includes(jenisName);
   });
 };
 

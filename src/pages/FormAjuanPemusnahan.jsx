@@ -907,12 +907,13 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Limbah</label>
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${!form.golonganLimbah ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
                 name="jenisLimbah"
                 value={form.jenisLimbah}
                 onChange={handleFormChange}
+                disabled={!form.golonganLimbah}
               >
-                <option value="">- Pilih Jenis -</option>
+                <option value="">{form.golonganLimbah ? '- Pilih Jenis -' : '- Pilih Golongan terlebih dahulu -'}</option>
                 {filteredJenisOptions.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}

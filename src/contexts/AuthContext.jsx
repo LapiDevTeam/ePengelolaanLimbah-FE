@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
   const fetchProfileFromToken = useCallback(async (token) => {
     try {
       const result = await dataAPI.getCurrentProfile();
-      console.log("🚀 ~ AuthProvider ~ result:", result)
       if (result.data.success) {
         // Determine role based on job title/level
         let userRole = result.data.data.user.role || "Pemohon";

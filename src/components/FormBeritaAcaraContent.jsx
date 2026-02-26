@@ -491,6 +491,9 @@ export default function FormBeritaAcaraContent({
                 }}>
                   <div>Paraf/Tgl</div>
                   <div style={{ height: '64px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    {(data.signatures?.hse_supervisor_officer?.nama || data.signatures?.hse_supervisor_officer?.user) && (
+                      <div style={{ textAlign: 'center', fontSize: '8px' }}>Approved by</div>
+                    )}
                     <div style={{ textAlign: 'center' }}>
                       {formatParafUser(
                         data.signatures?.hse_supervisor_officer?.nama,
@@ -512,6 +515,9 @@ export default function FormBeritaAcaraContent({
                 }}>
                   <div>Paraf/Tgl</div>
                   <div style={{ height: '64px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    {(data.signatures?.hse_manager?.nama || data.signatures?.hse_manager?.user) && (
+                      <div style={{ textAlign: 'center', fontSize: '8px' }}>Approved by</div>
+                    )}
                     <div style={{ textAlign: 'center' }}>
                       {formatParafUser(
                         data.signatures?.hse_manager?.nama,
@@ -539,6 +545,7 @@ export default function FormBeritaAcaraContent({
                         {/* Manager Pemohon Section */}
                         {(data.signatures?.manager_pemohon?.nama || data.signatures?.manager_pemohon?.user) && (
                           <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '8px' }}>Approved by</div>
                             <div>{formatParafUser(data.signatures.manager_pemohon.nama, data.signatures.manager_pemohon.user)}</div>
                             <div>{formatDateTime(data.signatures.manager_pemohon.tgl) || "N/A"}</div>
                           </div>
@@ -547,6 +554,7 @@ export default function FormBeritaAcaraContent({
                         {/* APJ QA Section */}
                         {(data.signatures?.apj_qa?.nama || data.signatures?.apj_qa?.user) && (
                           <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '8px' }}>Approved by</div>
                             <div>{formatParafUser(data.signatures.apj_qa.nama, data.signatures.apj_qa.user)}</div>
                             <div>{formatDateTime(data.signatures.apj_qa.tgl) || "N/A"}</div>
                           </div>
@@ -555,6 +563,7 @@ export default function FormBeritaAcaraContent({
                         {/* APJ PN Section */}
                         {(data.signatures?.apj_pn?.nama || data.signatures?.apj_pn?.user) && (
                           <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '8px' }}>Approved by</div>
                             <div>{formatParafUser(data.signatures.apj_pn.nama, data.signatures.apj_pn.user)}</div>
                             <div>{formatDateTime(data.signatures.apj_pn.tgl) || "N/A"}</div>
                           </div>
@@ -563,6 +572,7 @@ export default function FormBeritaAcaraContent({
                         {/* PJKPO Section */}
                         {(data.signatures?.pjkpo?.nama || data.signatures?.pjkpo?.user) && (
                           <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '8px' }}>Approved by</div>
                             <div>{formatParafUser(data.signatures.pjkpo.nama, data.signatures.pjkpo.user)}</div>
                             <div>{formatDateTime(data.signatures.pjkpo.tgl) || "N/A"}</div>
                           </div>
@@ -610,6 +620,9 @@ export default function FormBeritaAcaraContent({
                 }}>
                   <div>Paraf/Tgl</div>
                   <div style={{ height: '64px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    {(data.signatures?.head_of_plant?.nama || data.signatures?.head_of_plant?.user) && (
+                      <div style={{ textAlign: 'center', fontSize: '8px' }}>Approved by</div>
+                    )}
                     <div style={{ textAlign: 'center' }}>
                       {formatParafUser(
                         data.signatures?.head_of_plant?.nama,
@@ -633,7 +646,9 @@ export default function FormBeritaAcaraContent({
                   <div style={{ height: '64px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                     {/* Kosong (tempat tanda tangan fisik) hanya untuk recall/precursor.
                         Untuk limbah-b3, tampilkan N/A karena BPOM tidak relevan. */}
-                    {!data.show_bpom && (
+                    {data.show_bpom ? (
+                      <div style={{ textAlign: 'center', fontSize: '9px', color: '#999' }}>(tanda tangan basah)</div>
+                    ) : (
                       <div style={{ textAlign: 'center' }}>N/A</div>
                     )}
                   </div>

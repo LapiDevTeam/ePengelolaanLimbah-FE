@@ -214,14 +214,18 @@ const DataTable = ({
             group: groupFilter
           });
         } else {
-          // Fetch user's own requests (default behavior) - exclude completed for My Requests
+          // Dept. Requests tab - show all requests from user's department,
+          // including Completed ones (BAP complete remains visible).
+          const deptId = currentUser?.emp_DeptID || user?.emp_DeptID || '';
           response = await dataAPI.getDestructionRequests({
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            userOnly: true,
-            excludeCompleted: true,  // Exclude completed requests in My Requests tab
+            userOnly: false,
+            deptOnly: !!deptId,
+            userDept: deptId,
+            excludeCompleted: false,
             group: groupFilter
           });
         }

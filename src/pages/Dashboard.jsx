@@ -354,10 +354,10 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* My Requests Card - Always visible */}
+        {/* Dept. Requests Card - Always visible */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="mb-2">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">My Requests</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Dept. Requests</h3>
             {isLoadingStats ? (
               <div className="flex items-center justify-center h-12">
                 <svg className="animate-spin h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -366,7 +366,10 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
                 </svg>
               </div>
             ) : (
-              <p className="text-3xl font-bold text-green-600">{stats.myRequests}</p>
+              <>
+                <p className="text-3xl font-bold text-green-600">{stats.myRequests}</p>
+                <p className="text-xs text-gray-500 mt-1">Menampilkan data departemen Anda</p>
+              </>
             )}
           </div>
           {!isLoadingStats && (

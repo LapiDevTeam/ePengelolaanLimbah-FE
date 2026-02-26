@@ -114,7 +114,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   const tabs = [
     {
       id: "my-requests",
-      label: "My Requests",
+      label: "Dept. Requests",
     }
   ];
 
@@ -161,7 +161,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Daftar Ajuan Pemusnahan</h1>
             <p className="mt-2 text-gray-600">
-              {activeTab === "my-requests" && "Daftar ajuan pemusnahan yang telah Anda buat."}
+              {activeTab === "my-requests" && "Daftar ajuan pemusnahan dari departemen Anda."}
               {activeTab === "pending-approvals" && "Daftar ajuan pemusnahan yang menunggu persetujuan Anda."}
               {activeTab === "approved" && "Daftar ajuan pemusnahan yang telah Anda setujui."}
               {activeTab === "verifikasi" && "Daftar ajuan pemusnahan yang menunggu verifikasi lapangan."}

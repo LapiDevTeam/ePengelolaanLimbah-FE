@@ -73,7 +73,10 @@ export const dataAPI = {
         // New params for all-permohonan tab (non-KL users)
         filterByBagian = false,
         userBagian = '',
-        additionalGroups = ''
+        additionalGroups = '',
+        // Dept. Requests tab: show all requests from user's department
+        deptOnly = false,
+        userDept = ''
       } = params;
       
       // Build query params
@@ -107,6 +110,12 @@ export const dataAPI = {
       // Add group filter
       if (group) {
         queryParams.append('group', group);
+      }
+
+      // Add dept-only filter (Dept. Requests tab)
+      if (deptOnly && userDept) {
+        queryParams.append('deptOnly', 'true');
+        queryParams.append('userDept', userDept);
       }
 
       // Add bagian filtering for non-KL users in all-permohonan tab

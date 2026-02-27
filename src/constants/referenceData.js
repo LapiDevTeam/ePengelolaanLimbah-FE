@@ -43,27 +43,87 @@ export const DEFAULT_JENIS_OPTIONS = [
 
 /**
  * Mapping from golongan limbah label (case-insensitive) to the allowed
- * jenis_limbah names (the part after the kode, e.g. "Produk antara").
+ * jenis_limbah names. Must match the `jenis_limbah` field of DEFAULT_JENIS_OPTIONS
+ * exactly (comparison is case-insensitive).
  *
- * - Golongan not listed here → show ALL jenis options (no filter).
- * - Matching is done on the `jenis_limbah` field of each option (case-insensitive).
+ * - Golongan listed here → show only its mapped jenis options.
+ * - Golongan NOT listed here → show only jenis not claimed by any mapped golongan.
  */
 export const GOLONGAN_JENIS_FILTER_MAP = {
-  'Sisa Analisa Lab': [
+  'Prekursor & OOT': [
+    'Bahan Baku',
     'Produk antara',
     'Produk ruahan',
     'Produk setengah jadi',
     'Produk jadi',
-    'Limbah laboratorium (HPLC)',
+    'Produk kembalian',
+  ],
+  'Recall': [
+    'Produk jadi',
+  ],
+  'Recall & Prekursor': [
+    'Produk jadi',
+  ],
+  'Hormon': [
+    'Residu proses produksi dan formulasi',
+    'Bahan Baku',
+    'Produk antara',
+    'Produk ruahan',
+    'Produk setengah jadi',
+    'Produk jadi',
+    'Produk kembalian',
+  ],
+  'Sefalosporin': [
+    'Residu proses produksi dan formulasi',
+    'Bahan Baku',
+    'Produk antara',
+    'Produk ruahan',
+    'Produk setengah jadi',
+    'Produk jadi',
+    'Produk kembalian',
+  ],
+  'Probiotik': [
+    'Residu proses produksi dan formulasi',
+    'Bahan Baku',
+    'Produk antara',
+    'Produk ruahan',
+    'Produk setengah jadi',
+    'Produk jadi',
+    'Produk kembalian',
+  ],
+  'Non Betalaktam': [
+    'Residu proses produksi dan formulasi',
+    'Bahan Baku',
+    'Produk antara',
+    'Produk ruahan',
+    'Produk setengah jadi',
+    'Produk jadi',
+    'Produk kembalian',
+  ],
+  'Betalaktam': [
+    'Residu proses produksi dan formulasi',
+    'Bahan Baku',
+    'Produk antara',
+    'Produk ruahan',
+    'Produk setengah jadi',
+    'Produk jadi',
+    'Produk kembalian',
   ],
   'Limbah mikrobiologi': [
+    'Media Fill',
     'Sisa destruksi',
-    'Media fill',
+  ],
+  'Sisa Analisa Lab': [
+    'Limbah laboratorium (HPLC)',
+    'Bahan Kimia kadaluwarsa',
+    'Bahan Baku',
+    'Produk antara',
+    'Produk ruahan',
+    'Produk setengah jadi',
+    'Produk jadi',
   ],
   'Lain-lain': [
-    'Bahan Kimia kadaluwarsa',
-    'Sludge dari IPAL',
-    'Aki/Baterai bekas',
+    'Kain Majun dan sejenisnya',
     'Limbah terkontaminasi B3',
     'Minyak Pelumas/Oli bekas',
     'Cartridge',
@@ -71,6 +131,8 @@ export const GOLONGAN_JENIS_FILTER_MAP = {
     'Lampu TL',
     'Elektronik',
     'Kemasan bekas B3',
+    'Sludge dari IPAL',
+    'Aki/Baterai bekas',
   ],
 };
 

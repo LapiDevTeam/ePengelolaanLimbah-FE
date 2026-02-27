@@ -188,6 +188,42 @@ export const getGolonganDisplayName = (golonganValue, golonganOptions = DEFAULT_
   return foundGolongan ? foundGolongan.label : golonganValue;
 };
 
+// ---------------------------------------------------------------------------
+// Nama Limbah select options for Prekursor & OOT / Recall & Prekursor golongan
+// Only shown when jenis is "Bahan Baku" or starts with "Produk"
+// ---------------------------------------------------------------------------
+
+// Golongan values that trigger select-mode for Nama Limbah
+export const GOLONGAN_NAMA_LIMBAH_SELECT = ['Prekursor & OOT', 'Recall & Prekursor'];
+
+// Options when jenis_limbah === 'Bahan Baku' (alphabetically sorted)
+export const NAMA_LIMBAH_BB_OPTIONS = [
+  { value: 'Dextrometorphan HBr', label: 'Dextrometorphan HBr' },
+  { value: 'Phenylpropanolamine HCl/ Norephedrine HCl', label: 'Phenylpropanolamine HCl/ Norephedrine HCl' },
+  { value: 'Phenylpropanolamine HCl RS/ Norephedrine HCl RS', label: 'Phenylpropanolamine HCl RS/ Norephedrine HCl RS' },
+  { value: 'Pseudoefedrin HCl', label: 'Pseudoefedrin HCl' },
+  { value: 'Pseudoefedrin HCl RS', label: 'Pseudoefedrin HCl RS' },
+  { value: 'Pseudoefedrin Sulphate', label: 'Pseudoefedrin Sulphate' },
+  { value: 'Pseudoefedrin Sulphate RS', label: 'Pseudoefedrin Sulphate RS' },
+  { value: 'Tramadol', label: 'Tramadol' },
+];
+
+// Options when jenis_limbah starts with 'Produk' (alphabetically sorted)
+export const NAMA_LIMBAH_PRODUK_OPTIONS = [
+  { value: 'Analtram.', label: 'Analtram.' },
+  { value: 'Lacoldin Sirup', label: 'Lacoldin Sirup' },
+  { value: 'Lacoldin Tablet', label: 'Lacoldin Tablet' },
+  { value: 'Lanos Drops', label: 'Lanos Drops' },
+  { value: 'Lanos Plus Sirup', label: 'Lanos Plus Sirup' },
+  { value: 'Lapifed DM Sirup', label: 'Lapifed DM Sirup' },
+  { value: 'Lapifed Ekspektoran Sirup', label: 'Lapifed Ekspektoran Sirup' },
+  { value: 'Lapifed Sirup', label: 'Lapifed Sirup' },
+  { value: 'Lapifed Tablet', label: 'Lapifed Tablet' },
+  { value: 'Lapisiv Sirup', label: 'Lapisiv Sirup' },
+  { value: 'Lapisiv-T Tablet', label: 'Lapisiv-T Tablet' },
+  { value: 'Pseudoefedrin Drops', label: 'Pseudoefedrin Drops' },
+];
+
 // Status mapping constants
 export const STATUS_MAPPINGS = {
   'Draft': 'Draft',

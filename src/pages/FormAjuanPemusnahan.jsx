@@ -30,7 +30,10 @@ import {
   getStatusDisplayName, 
   DEFAULT_JENIS_OPTIONS,
   DEFAULT_GOLONGAN_OPTIONS,
-  getFilteredJenisOptions
+  getFilteredJenisOptions,
+  GOLONGAN_NAMA_LIMBAH_SELECT,
+  NAMA_LIMBAH_BB_OPTIONS,
+  NAMA_LIMBAH_PRODUK_OPTIONS
 } from "../constants/referenceData";
 import { useConfigContext } from "../contexts/ConfigContext";
 
@@ -311,7 +314,14 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
         // Also reset isProdukPangan when golongan changes away from Recall
         ...(newGolonganLabel !== 'Recall' ? { isProdukPangan: false } : {})
       }));
+      // Reset namaLimbah on all detail rows when golongan changes
+      setDetails(prev => prev.map(d => ({ ...d, namaLimbah: '' })));
       return;
+    }
+
+    if (name === 'jenisLimbah') {
+      // Reset namaLimbah on all detail rows when jenis changes
+      setDetails(prev => prev.map(d => ({ ...d, namaLimbah: '' })));
     }
 
     setForm({ ...form, [name]: value });
@@ -780,6 +790,9 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
 
   const isRecallSelected = golonganOptions.find(g => g.value === form.golonganLimbah)?.label === 'Recall';
 
+  // Whether the current golongan triggers select-mode for Nama Limbah in lampiran rows
+  const isNamaLimbahSelectGolongan = GOLONGAN_NAMA_LIMBAH_SELECT.includes(selectedGolonganLabel);
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -1010,14 +1023,37 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
                               />
                             </td>
                             <td className="px-2 py-2">
-                              <input
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500"
-                                name="namaLimbah"
-                                value={detail.namaLimbah}
-                                onChange={e => handleDetailChange(idx, e)}
-                                placeholder="Nama Limbah"
-                                required
-                              />
+                              {(() => {
+                                const jenisLabel = detail.jenisLimbah || '';
+                                const isSelectMode = isNamaLimbahSelectGolongan &&
+                                  (jenisLabel === 'Bahan Baku' || jenisLabel.startsWith('Produk'));
+                                const namaOpts = jenisLabel === 'Bahan Baku'
+                                  ? NAMA_LIMBAH_BB_OPTIONS
+                                  : NAMA_LIMBAH_PRODUK_OPTIONS;
+                                return isSelectMode ? (
+                                  <select
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                                    name="namaLimbah"
+                                    value={detail.namaLimbah}
+                                    onChange={e => handleDetailChange(idx, e)}
+                                    required
+                                  >
+                                    <option value="">- Pilih Nama Limbah -</option>
+                                    {namaOpts.map(opt => (
+                                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <input
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500"
+                                    name="namaLimbah"
+                                    value={detail.namaLimbah}
+                                    onChange={e => handleDetailChange(idx, e)}
+                                    placeholder="Nama Limbah"
+                                    required
+                                  />
+                                );
+                              })()}
                             </td>
                             <td className="px-2 py-2">
                               <input

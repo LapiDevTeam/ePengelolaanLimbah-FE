@@ -17,7 +17,9 @@ import { showSuccess, showError, showConfirmation } from "../utils/sweetAlert";
 import { 
   isPemohon as checkIsPemohon,
   isManager as checkIsManager,
-  isHSE as checkIsHSE 
+  isHSE as checkIsHSE,
+  canSubmitAjuan as checkCanSubmitAjuan,
+  canDeleteAjuan as checkCanDeleteAjuan
 } from "../constants/accessRights";
 
 // Simple CSS icons as components
@@ -281,7 +283,7 @@ const DataTable = ({
   const isApproverView = viewMode === 'pending-approvals' || viewMode === 'approved';
 
   // Render action buttons for a row. Keep logic centralized for readability.
-  const renderActions = (item, isOwner) => {
+  const renderActions = (item, isSameDept) => {
     if (viewMode === "pending-approvals") {
       return (
         <>
@@ -307,10 +309,11 @@ const DataTable = ({
       );
     }
 
-    // My Requests / All Permohonan: only owner may edit/submit/delete Draft
+    // Dept. Requests: anyone in the same department may edit a Draft.
+    // Submit and Delete are further restricted by Job_LevelID (see accessRights.js).
     return (
       <>
-        {item.status === "Draft" && isOwner && (
+        {item.status === "Draft" && isSameDept && (
           <>
             <button
               className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors"
@@ -319,20 +322,24 @@ const DataTable = ({
             >
               Edit
             </button>
-            <button
-              className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
-              onClick={() => handleSubmit(item.id)}
-              title="Submit for Approval"
-            >
-              Submit
-            </button>
-            <button
-              className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-              onClick={() => handleDelete(item.id)}
-              title="Delete Request"
-            >
-              Delete
-            </button>
+            {canSubmitData && (
+              <button
+                className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                onClick={() => handleSubmit(item.id)}
+                title="Submit for Approval"
+              >
+                Submit
+              </button>
+            )}
+            {canDeleteData && (
+              <button
+                className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                onClick={() => handleDelete(item.id)}
+                title="Delete Request"
+              >
+                Delete
+              </button>
+            )}
           </>
         )}
       </>
@@ -376,7 +383,10 @@ const DataTable = ({
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            userOnly: true
+            userOnly: false,
+            deptOnly: !!(currentUser?.emp_DeptID || user?.emp_DeptID),
+            userDept: currentUser?.emp_DeptID || user?.emp_DeptID || '',
+            excludeCompleted: false
           });
         }
         if (updatedResponse.data.success) {
@@ -424,7 +434,10 @@ const DataTable = ({
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            userOnly: true
+            userOnly: false,
+            deptOnly: !!(currentUser?.emp_DeptID || user?.emp_DeptID),
+            userDept: currentUser?.emp_DeptID || user?.emp_DeptID || '',
+            excludeCompleted: false
           });
         }
         if (updatedResponse.data.success) {
@@ -455,13 +468,17 @@ const DataTable = ({
         const response = await dataAPI.deleteDestructionRequest(id);
         if (response.data.success) {
           showSuccess(response.data.message);
-          // Re-fetch data to update the list
+          // Re-fetch dept data to update the list consistently with Dept. Requests tab
+          const deptId = currentUser?.emp_DeptID || user?.emp_DeptID || '';
           const updatedResponse = await dataAPI.getDestructionRequests({
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            userOnly: true
+            userOnly: false,
+            deptOnly: !!deptId,
+            userDept: deptId,
+            excludeCompleted: false
           });
           if (updatedResponse.data.success) {
             setData(updatedResponse.data.data);
@@ -484,13 +501,17 @@ const DataTable = ({
         const response = await dataAPI.submitDestructionRequest(id);
         if (response.data.success) {
           showSuccess(response.data.message);
-          // Re-fetch data to update the list
+          // Re-fetch dept data to update the list consistently with Dept. Requests tab
+          const deptId = currentUser?.emp_DeptID || user?.emp_DeptID || '';
           const updatedResponse = await dataAPI.getDestructionRequests({
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            userOnly: true
+            userOnly: false,
+            deptOnly: !!deptId,
+            userDept: deptId,
+            excludeCompleted: false
           });
           if (updatedResponse.data.success) {
             setData(updatedResponse.data.data);
@@ -510,6 +531,12 @@ const DataTable = ({
   const isPemohon = checkIsPemohon(user);
   const isManager = checkIsManager(user);
   const isHSE = checkIsHSE(user);
+
+  // Job-level-based data action permissions (centralized in accessRights)
+  // Job_LevelID >= 7 (operator/pelaksana) can only create draft, view, edit
+  // Job_LevelID 1-6 can also submit and delete
+  const canSubmitData = checkCanSubmitAjuan(user);
+  const canDeleteData = checkCanDeleteAjuan(user);
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -632,11 +659,11 @@ const DataTable = ({
                 const jenisData = jenisOptions.find(j => j.id === item.jenis_limbah_b3_id);
                 const jenisName = jenisData?.jenis_limbah || 'N/A'; // Use the separated jenis_limbah field
                 
-                // Check if current user is the owner of this request
-                // Compare by name (case-insensitive) to handle type differences
-                const requesterName = (item.requesterName || '').toString().trim().toLowerCase();
-                const currentUserName = (currentUser?.Nama || '').toString().trim().toLowerCase();
-                const isOwner = requesterName !== '' && requesterName === currentUserName;
+                // Check if current user is in the same department as the request.
+                // This governs who can edit/submit/delete a Draft (anyone in the same dept).
+                const itemBagian = (item.bagian || '').toString().trim().toUpperCase();
+                const userDeptID = (currentUser?.emp_DeptID || user?.emp_DeptID || '').toString().trim().toUpperCase();
+                const isSameDept = itemBagian !== '' && userDeptID !== '' && itemBagian === userDeptID;
                 
                 return (
                 <tr key={item.id} className="hover:bg-gray-50">
@@ -684,7 +711,7 @@ const DataTable = ({
                       >
                         View
                       </button>
-                      {renderActions(item, isOwner)}
+                      {renderActions(item, isSameDept)}
                     </div>
                   </td>
                 </tr>

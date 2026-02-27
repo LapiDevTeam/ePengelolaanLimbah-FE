@@ -95,6 +95,7 @@ const normalizeUser = (user) => {
     Jabatan: user.Jabatan || null,
     emp_DeptID: user.emp_DeptID ? String(user.emp_DeptID).toUpperCase() : null,
     emp_JobLevelID: user.emp_JobLevelID ? String(user.emp_JobLevelID).toLowerCase() : null,
+    Job_LevelID: user.Job_LevelID != null ? Number(user.Job_LevelID) : null,
   };
 };
 
@@ -379,6 +380,13 @@ export const canShowApprovalActions = (user, data, fromApprovedTab = false) => {
 };
 
 /**
+ * Job Level threshold for restricted (operator/pelaksana) access.
+ * Job_LevelID >= this value can only create drafts, view, and edit.
+ * They CANNOT submit or delete ajuan.
+ */
+export const RESTRICTED_JOB_LEVEL = 7;
+
+/**
  * Check if user can create new ajuan
  * Currently any logged-in user can create
  * Used in: FormAjuanPemusnahan.jsx
@@ -388,6 +396,48 @@ export const canShowApprovalActions = (user, data, fromApprovedTab = false) => {
  */
 export const canCreateAjuan = (user) => {
   return !!user;
+};
+
+/**
+ * Check if user can submit ajuan (send draft into approval workflow)
+ * Job_LevelID >= 7 (operator/pelaksana) CANNOT submit.
+ * Job_LevelID 1–6 (supervisor and above) CAN submit.
+ * This is about data operations only, NOT approval workflow.
+ * Used in: DataTable.jsx
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {boolean} True if user can submit ajuan
+ */
+export const canSubmitAjuan = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) return false;
+
+  const jobLevel = normalizedUser.Job_LevelID;
+  // If job level info is not available, allow (backward compatibility)
+  if (jobLevel === null || jobLevel === undefined) return true;
+
+  return jobLevel < RESTRICTED_JOB_LEVEL;
+};
+
+/**
+ * Check if user can delete ajuan
+ * Job_LevelID >= 7 (operator/pelaksana) CANNOT delete.
+ * Job_LevelID 1–6 (supervisor and above) CAN delete.
+ * This is about data operations only, NOT approval workflow.
+ * Used in: DataTable.jsx
+ * 
+ * @param {object} user - User object from AuthContext
+ * @returns {boolean} True if user can delete ajuan
+ */
+export const canDeleteAjuan = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) return false;
+
+  const jobLevel = normalizedUser.Job_LevelID;
+  // If job level info is not available, allow (backward compatibility)
+  if (jobLevel === null || jobLevel === undefined) return true;
+
+  return jobLevel < RESTRICTED_JOB_LEVEL;
 };
 
 /**
@@ -696,6 +746,8 @@ export const getUserPermissions = (user) => {
     
     // Combined
     canCreateAjuan: canCreateAjuan(user),
+    canSubmitAjuan: canSubmitAjuan(user),
+    canDeleteAjuan: canDeleteAjuan(user),
     canCreateBeritaAcaraByDeptLevel: (group) => canCreateBeritaAcaraByDeptLevel(user, group),
     shouldShowDaftarAjuanTabs: shouldShowDaftarAjuanTabs(user),
     

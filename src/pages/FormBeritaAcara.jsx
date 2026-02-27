@@ -54,7 +54,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     startDate: getLocalDateISO(), // Start of date range in YYYY-MM-DD format
     endDate: getLocalDateISO(), // End of date range in YYYY-MM-DD format
     jam: getLocalTimeHHMMSS(), // Current local time in HH:MM:SS format
-    lokasiVerifikasi: "TPS",
+    lokasiVerifikasi: "Lapi Kav. 16,18",
     pelaksanaBagian: "",
     supervisorBagian: "",
     pelaksanaHSE: "",
@@ -247,7 +247,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
       startDate: getLocalDateISO(),
       endDate: getLocalDateISO(),
       jam: getLocalTimeHHMMSS(),
-      lokasiVerifikasi: "TPS",
+      lokasiVerifikasi: "Lapi Kav. 16,18",
       pelaksanaBagian: "",
       supervisorBagian: "",
       pelaksanaHSE: "",
@@ -504,14 +504,15 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Lokasi Verifikasi</label>
-                <input
+                <select
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   name="lokasiVerifikasi"
-                  type="text"
                   value={form.lokasiVerifikasi}
                   onChange={handleFormChange}
-                  placeholder="Lokasi Verifikasi"
-                />
+                >
+                  <option value="Lapi kav.16,18">Lapi Kav. 16,18</option>
+                  <option value="Lapi kav. 22,24">Lapi Kav. 22,24</option>
+                </select>
               </div>
             </div>
 

@@ -192,21 +192,36 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     };
   }, [form, daftarPemusnahan, user]);
 
+  // Precursor & OOT group uses a date RANGE; all other groups use a single date
+  const isPrecursorGroup = group === 'recall-precursor';
+
   const handleFormChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (!isPrecursorGroup && name === 'startDate') {
+      // In single-date mode keep startDate and endDate in sync
+      setForm({ ...form, startDate: value, endDate: value });
+      return;
+    }
+    setForm({ ...form, [name]: value });
   };
 
   const fetchDaftarPemusnahan = async () => {
     // Business Rule: One BAP must belong to exactly one bagian
-    if (!form.bagian || !form.startDate || !form.endDate) {
+    if (!form.bagian || !form.startDate) {
+      showWarning("Bagian dan tanggal verifikasi lapangan harus diisi terlebih dahulu");
+      return;
+    }
+    if (isPrecursorGroup && !form.endDate) {
       showWarning("Bagian dan periode selesai verifikasi lapangan harus diisi terlebih dahulu");
       return;
     }
-
-    if (new Date(form.startDate) > new Date(form.endDate)) {
+    if (isPrecursorGroup && new Date(form.startDate) > new Date(form.endDate)) {
       showWarning("Tanggal 'Dari' tidak boleh lebih besar dari tanggal 'Sampai'");
       return;
     }
+
+    // In single-date mode send the same date as both start and end
+    const effectiveEndDate = isPrecursorGroup ? form.endDate : form.startDate;
 
     setIsGenerating(true);
     try {
@@ -214,7 +229,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
       const response = await dataAPI.getAvailableRequestsForDailyLog({ 
         bagian: form.bagian, // Single string, not array
         startDate: form.startDate,
-        endDate: form.endDate,
+        endDate: effectiveEndDate,
         group: group || undefined
       });
 
@@ -223,7 +238,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
         setDaftarGenerated(true);
 
         if ((response.data.data || []).length === 0) {
-          showInfo(`Tidak ada permohonan yang selesai diverifikasi untuk bagian ${form.bagian} pada periode ${form.startDate} s/d ${form.endDate}`);
+          showInfo(`Tidak ada permohonan yang selesai diverifikasi untuk bagian ${form.bagian} pada ${isPrecursorGroup ? `periode ${form.startDate} s/d ${form.endDate}` : `tanggal ${form.startDate}`}`);
         }
       } else {
         setDaftarPemusnahan([]);
@@ -318,8 +333,11 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     if (!form.bagian || typeof form.bagian !== 'string' || form.bagian.trim() === '') {
       errors.push("Bagian harus diisi");
     }
-    if (!form.startDate || !form.endDate) {
-      errors.push("Periode selesai verifikasi lapangan harus diisi");
+    if (!form.startDate) {
+      errors.push("Tanggal verifikasi lapangan harus diisi");
+    }
+    if (isPrecursorGroup && !form.endDate) {
+      errors.push("Tanggal akhir periode verifikasi lapangan harus diisi");
     }
     if (!form.jam) {
       errors.push("Jam/Waktu harus diisi");
@@ -462,35 +480,52 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
                 </select>
                 <p className="mt-1 text-xs text-gray-500">Satu BAP hanya untuk satu bagian</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Periode Verifikasi Lapangan</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Dari</span>
+              {isPrecursorGroup ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Periode Verifikasi Lapangan</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Dari</span>
+                      <input
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        name="startDate"
+                        type="date"
+                        value={form.startDate}
+                        onChange={handleFormChange}
+                        title="Tanggal awal periode selesai verifikasi lapangan"
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">Data ditampilkan berdasarkan tanggal selesai verifikasi lapangan</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Sampai</span>
+                      <input
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        name="endDate"
+                        type="date"
+                        value={form.endDate}
+                        onChange={handleFormChange}
+                        title="Tanggal akhir periode selesai verifikasi lapangan"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Verifikasi Lapangan</label>
                   <input
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     name="startDate"
                     type="date"
                     value={form.startDate}
                     onChange={handleFormChange}
-                    title="Tanggal awal periode selesai verifikasi lapangan"
+                    title="Tanggal selesai verifikasi lapangan"
                   />
+                  <p className="mt-1 text-xs text-gray-500">Data ditampilkan berdasarkan tanggal selesai verifikasi lapangan</p>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Data ditampilkan berdasarkan tanggal selesai verifikasi lapangan</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Sampai</span>
-                  <input
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    name="endDate"
-                    type="date"
-                    value={form.endDate}
-                    onChange={handleFormChange}
-                    title="Tanggal akhir periode selesai verifikasi lapangan"
-                  />
-                </div>
-              </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Jam/Waktu</label>
                 <input

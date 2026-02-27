@@ -153,7 +153,8 @@ export const dataAPI = {
               golonganGroup: item.golonganGroup || null,
               isPendingForCurrentUser: item.isPendingForCurrentUser || false,
               canCurrentUserApprove: item.canCurrentUserApprove || false,
-              bap_status: item.bap_status || null
+              bap_status: item.bap_status || null,
+              berita_acara_id: item.berita_acara_id || null
             })),
             pagination: response.data.pagination
           }
@@ -1675,7 +1676,9 @@ export const dataAPI = {
               // New fields from enhanced API response
               golonganGroup: item.golonganGroup || null,
               isPendingForCurrentUser: item.isPendingForCurrentUser || false,
-              canCurrentUserApprove: item.canCurrentUserApprove || false
+              canCurrentUserApprove: item.canCurrentUserApprove || false,
+              bap_status: item.bap_status || null,
+              berita_acara_id: item.berita_acara_id || null
             })),
             pagination: response.data.pagination
           }
@@ -1735,7 +1738,9 @@ export const dataAPI = {
               // New fields from enhanced API response
               golonganGroup: item.golonganGroup || null,
               isPendingForCurrentUser: item.isPendingForCurrentUser || false,
-              canCurrentUserApprove: item.canCurrentUserApprove || false
+              canCurrentUserApprove: item.canCurrentUserApprove || false,
+              bap_status: item.bap_status || null,
+              berita_acara_id: item.berita_acara_id || null
             })),
             pagination: response.data.pagination
           }
@@ -1784,7 +1789,9 @@ export const dataAPI = {
               // New fields from enhanced API response
               golonganGroup: item.golonganGroup || null,
               isPendingForCurrentUser: item.isPendingForCurrentUser || false,
-              canCurrentUserApprove: item.canCurrentUserApprove || false
+              canCurrentUserApprove: item.canCurrentUserApprove || false,
+              bap_status: item.bap_status || null,
+              berita_acara_id: item.berita_acara_id || null
             })),
             pagination: response.data.pagination
           }

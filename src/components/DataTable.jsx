@@ -685,9 +685,26 @@ const DataTable = ({
                       {getStatusDisplayName(item.status, item.currentStepLevel)}
                     </span>
                     {viewMode === 'my-requests' && item.status === 'Completed' && item.bap_status && item.bap_status !== 'Completed' && (
-                      <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700">
+                      <button
+                        className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors cursor-pointer"
+                        title="Klik untuk melihat detail Berita Acara"
+                        onClick={() => {
+                          if (onNavigate && item.berita_acara_id) {
+                            onNavigate('detail-berita-acara', {
+                              id: item.berita_acara_id,
+                              from: {
+                                page: 'daftar-ajuan',
+                                pageAlias: groupFilter ? `daftar-ajuan-${groupFilter === 'limbah-b3' ? 'b3' : groupFilter === 'recall-precursor' ? 'recall-precursor-oot' : groupFilter}` : 'daftar-ajuan-b3',
+                                viewMode: viewMode,
+                                group: groupFilter,
+                                pageNumber: currentPage
+                              }
+                            });
+                          }
+                        }}
+                      >
                         BAP: {item.bap_status}
-                      </span>
+                      </button>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

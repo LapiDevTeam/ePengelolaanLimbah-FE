@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { dataAPI } from "../services/api";
 import { formatDateTimeID, formatDateID, toJakartaIsoFromLocal } from "../utils/time";
-import { getBaseUrl } from "../utils/urlHelper";
-import { TokenManager } from "../utils/tokenManager";
 import { useAuth } from "../contexts/AuthContext";
 import { useConfigContext } from "../contexts/ConfigContext";
 import DownloadLabelModal from "../components/DownloadLabelModal";
@@ -55,8 +53,6 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
   };
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [showFieldVerificationModal, setShowFieldVerificationModal] = useState(false);
-  const [permohonanLoading, setPermohonanLoading] = useState(false);
-  const [excelLoading, setExcelLoading] = useState(false);
   const [rejectModal, setRejectModal] = useState({ isOpen: false, itemId: null, loading: false });
   const [approveModal, setApproveModal] = useState({ isOpen: false, loading: false });
   const [jenisOptions, setJenisOptions] = useState([]);
@@ -298,20 +294,6 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
     );
   }
 
-  // Show loading screen when generating permohonan PDF
-  if (permohonanLoading) {
-    return (
-      <div className="p-6">
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Generating Form Permohonan...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="p-6">
@@ -383,115 +365,6 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
                 >
                   Verifikasi Lapangan
                 </button>
-              </>
-            )}
-
-            {/* Show download button when status is Completed */}
-            {data?.status === 'Completed' && (
-              <>
-                <button
-                  onClick={async () => {
-                    // Download Excel lampiran
-                    const id = applicationId || data?.id;
-                    if (!id) {
-                      showError('ID permohonan tidak tersedia');
-                      return;
-                    }
-
-                    try {
-                      setExcelLoading(true);
-                      const response = await dataAPI.downloadPermohonanExcel(id);
-                      
-                      if (response.data.success && response.data.data) {
-                        // Create and download Excel file
-                        const arrayBuffer = response.data.data;
-                        const blob = new Blob([arrayBuffer], { 
-                          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-                        });
-                        
-                        // Create download link
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `detail-limbah-${data?.noPermohonan || id}.xlsx`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                        
-                        console.log('Excel file downloaded successfully');
-                      } else {
-                        showError('Gagal mengunduh lampiran Excel: ' + (response.data.message || 'Unknown error'));
-                      }
-                    } catch (err) {
-                      console.error('Error downloading Excel:', err);
-                      showError('Gagal mengunduh lampiran Excel');
-                    } finally {
-                      setExcelLoading(false);
-                    }
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
-                  disabled={excelLoading}
-                >
-                  {excelLoading ? 'Downloading...' : 'Download Lampiran'}
-                </button>
-
-                <button
-                  onClick={async () => {
-                    // Directly generate PDF without opening modal
-                    const id = applicationId || data?.id;
-                  if (!id) return;
-                  try {
-                    setPermohonanLoading(true);
-                    
-                    // Fetch permohonan data first to get the required info
-                    const res = await dataAPI.getPermohonanDataForDoc(id);
-                    if (!res.data.success) {
-                      showError(res.data?.message || 'Gagal memuat data permohonan');
-                      return;
-                    }
-                    
-                    const permohonanData = res.data.data;
-                    const BASE_URL_FE = getBaseUrl();
-                    const link = `${BASE_URL_FE}/permohonan-pemusnahan/print/${id}`;
-                    const createdAt = permohonanData?.tanggal_pengajuan || new Date().toISOString();
-
-                    // Try to call the print API directly with authentication
-                    try {
-                      const printRes = await dataAPI.printPermohonanPemusnahan({ requestId: id, link, createdAt });
-                      if (printRes?.data?.success && printRes.data.data) {
-                        // response.data.data is an ArrayBuffer
-                        const arrayBuffer = printRes.data.data;
-                        const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-                        const url = window.URL.createObjectURL(blob);
-                        window.open(url, '_blank');
-                        console.log('PDF generated successfully');
-                      } else {
-                        console.warn('Print request failed:', printRes?.data?.message);
-                        // Fallback to direct URL with token
-                        const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '');
-                        const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(link)}&createdAt=${encodeURIComponent(createdAt)}`;
-                        window.open(TokenManager.addTokenToUrl(printUrl), '_blank');
-                      }
-                    } catch (printErr) {
-                      console.warn('Print API call failed:', printErr.message);
-                      // Fallback to direct URL with token
-                      const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '');
-                      const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(link)}&createdAt=${encodeURIComponent(createdAt)}`;
-                      window.open(TokenManager.addTokenToUrl(printUrl), '_blank');
-                    }
-                  } catch (err) {
-                    console.error('Error generating PDF:', err);
-                    showError('Gagal membuat PDF permohonan');
-                  } finally {
-                    setPermohonanLoading(false);
-                  }
-                }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-                disabled={permohonanLoading}
-              >
-                {permohonanLoading ? 'Generating...' : 'Generate Form Permohonan'}
-              </button>
               </>
             )}
 

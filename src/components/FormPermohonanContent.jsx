@@ -394,6 +394,7 @@ export default function FormPermohonanContent({ requestId = null, data: initialD
                 <div>Paraf/Tgl</div>
                 <div>
                   <div className="h-6"></div>
+                  <div className="text-center text-xs text-gray-500">Approved by:</div>
                   <div className="text-center">
                     {formatParafUser(
                       data?.penyerah?.paraf,
@@ -415,6 +416,7 @@ export default function FormPermohonanContent({ requestId = null, data: initialD
                       {/* APJ QA Section */}
                       {(data?.menyetujui?.apj_qa?.paraf || data?.menyetujui?.apj_qa?.user) && (
                         <div className="text-center">
+                          <div className="text-xs text-gray-500">Approved by:</div>
                           <div>{formatParafUser(data?.menyetujui?.apj_qa?.paraf, data?.menyetujui?.apj_qa?.user)}</div>
                           <div>{formatDateTime(data?.menyetujui?.apj_qa?.tgl) || "N/A"}</div>
                         </div>
@@ -423,6 +425,7 @@ export default function FormPermohonanContent({ requestId = null, data: initialD
                       {/* APJ PN Section */}
                       {(data?.menyetujui?.apj_pn?.paraf || data?.menyetujui?.apj_pn?.user) && (
                         <div className="text-center">
+                          <div className="text-xs text-gray-500">Approved by:</div>
                           <div>{formatParafUser(data?.menyetujui?.apj_pn?.paraf, data?.menyetujui?.apj_pn?.user)}</div>
                           <div>{formatDateTime(data?.menyetujui?.apj_pn?.tgl) || "N/A"}</div>
                         </div>
@@ -431,6 +434,7 @@ export default function FormPermohonanContent({ requestId = null, data: initialD
                       {/* PJKPO Section */}
                       {(data?.menyetujui?.pjkpo?.paraf || data?.menyetujui?.pjkpo?.user) && (
                         <div className="text-center">
+                          <div className="text-xs text-gray-500">Approved by:</div>
                           <div>{formatParafUser(data?.menyetujui?.pjkpo?.paraf, data?.menyetujui?.pjkpo?.user)}</div>
                           <div>{formatDateTime(data?.menyetujui?.pjkpo?.tgl) || "N/A"}</div>
                         </div>
@@ -470,6 +474,7 @@ export default function FormPermohonanContent({ requestId = null, data: initialD
                 <div>Paraf/Tgl</div>
                 <div>
                   <div className="h-6"></div>
+                  <div className="text-center text-xs text-gray-500">Approved by:</div>
                   <div className="text-center">
                     {formatParafUser(
                       data?.mengetahui?.paraf,

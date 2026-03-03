@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { dataAPI } from "../services/api";
 import { formatDateTimeID, formatDateID, toJakartaIsoFromLocal } from "../utils/time";
+import { getBaseUrl } from "../utils/urlHelper";
+import { TokenManager } from "../utils/tokenManager";
 import { useAuth } from "../contexts/AuthContext";
 import { useConfigContext } from "../contexts/ConfigContext";
 import DownloadLabelModal from "../components/DownloadLabelModal";
@@ -15,7 +17,7 @@ import {
   DEFAULT_JENIS_OPTIONS,
   DEFAULT_GOLONGAN_OPTIONS
 } from "../constants/referenceData";
-import { canShowApprovalActions } from "../constants/accessRights";
+import { canShowApprovalActions, isFromKLDepartment } from "../constants/accessRights";
 
 // Use centralized Jakarta formatters so displayed timestamps match stored Jakarta wall-clock
 const formatTimestamp = (timestamp) => {
@@ -53,6 +55,8 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
   };
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [showFieldVerificationModal, setShowFieldVerificationModal] = useState(false);
+  const [permohonanLoading, setPermohonanLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
   const [rejectModal, setRejectModal] = useState({ isOpen: false, itemId: null, loading: false });
   const [approveModal, setApproveModal] = useState({ isOpen: false, loading: false });
   const [jenisOptions, setJenisOptions] = useState([]);
@@ -328,6 +332,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
 
   // Determine if item is a 'Recall'
   const isRecall = (data.details.golonganLimbah || '').toLowerCase().includes('recall');
+  const isKLUser = isFromKLDepartment(user);
 
   return (
     <div className="p-6">
@@ -364,6 +369,95 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
                   Verifikasi Lapangan
+                </button>
+              </>
+            )}
+
+            {/* Download Lampiran & Generate Form Permohonan - KL only, Completed status only */}
+            {isKLUser && data?.status === 'Completed' && (
+              <>
+                <button
+                  onClick={async () => {
+                    const id = applicationId || data?.id;
+                    if (!id) {
+                      showError('ID permohonan tidak tersedia');
+                      return;
+                    }
+                    try {
+                      setExcelLoading(true);
+                      const response = await dataAPI.downloadPermohonanExcel(id);
+                      if (response.data.success && response.data.data) {
+                        const arrayBuffer = response.data.data;
+                        const blob = new Blob([arrayBuffer], {
+                          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        });
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `detail-limbah-${data?.noPermohonan || id}.xlsx`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } else {
+                        showError('Gagal mengunduh lampiran Excel: ' + (response.data.message || 'Unknown error'));
+                      }
+                    } catch (err) {
+                      console.error('Error downloading Excel:', err);
+                      showError('Gagal mengunduh lampiran Excel');
+                    } finally {
+                      setExcelLoading(false);
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                  disabled={excelLoading}
+                >
+                  {excelLoading ? 'Downloading...' : 'Download Lampiran'}
+                </button>
+
+                <button
+                  onClick={async () => {
+                    const id = applicationId || data?.id;
+                    if (!id) return;
+                    try {
+                      setPermohonanLoading(true);
+                      const res = await dataAPI.getPermohonanDataForDoc(id);
+                      if (!res.data.success) {
+                        showError(res.data?.message || 'Gagal memuat data permohonan');
+                        return;
+                      }
+                      const permohonanData = res.data.data;
+                      const BASE_URL_FE = getBaseUrl();
+                      const link = `${BASE_URL_FE}/permohonan-pemusnahan/print/${id}`;
+                      const createdAt = permohonanData?.tanggal_pengajuan || new Date().toISOString();
+                      try {
+                        const printRes = await dataAPI.printPermohonanPemusnahan({ requestId: id, link, createdAt });
+                        if (printRes?.data?.success && printRes.data.data) {
+                          const blob = new Blob([printRes.data.data], { type: 'application/pdf' });
+                          const url = window.URL.createObjectURL(blob);
+                          window.open(url, '_blank');
+                        } else {
+                          const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '');
+                          const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(link)}&createdAt=${encodeURIComponent(createdAt)}`;
+                          window.open(TokenManager.addTokenToUrl(printUrl), '_blank');
+                        }
+                      } catch (printErr) {
+                        console.warn('Print API call failed:', printErr.message);
+                        const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '');
+                        const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(link)}&createdAt=${encodeURIComponent(createdAt)}`;
+                        window.open(TokenManager.addTokenToUrl(printUrl), '_blank');
+                      }
+                    } catch (err) {
+                      console.error('Error generating PDF:', err);
+                      showError('Gagal membuat PDF permohonan');
+                    } finally {
+                      setPermohonanLoading(false);
+                    }
+                  }}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+                  disabled={permohonanLoading}
+                >
+                  {permohonanLoading ? 'Generating...' : 'Generate Form Permohonan'}
                 </button>
               </>
             )}

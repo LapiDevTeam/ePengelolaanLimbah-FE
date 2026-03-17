@@ -36,6 +36,12 @@ const AdminIcon = () => (
   </svg>
 )
 
+const DownloadIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+  </svg>
+)
+
 const ChevronDownIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -153,6 +159,13 @@ const Sidebar = ({ currentPage, onNavigate, isCollapsed, setIsCollapsed, hasPend
           onClick: () => onNavigate("berita-acara", { group: "recall-precursor", pageAlias: "berita-acara-recall-precursor-oot" }),
         },
       ],
+    },
+    {
+      id: "audit-log-download",
+      label: "Audit Trail",
+      icon: <DownloadIcon />,
+      page: "audit-log-download",
+      onClick: () => onNavigate("audit-log-download"),
     },
     /*
     {

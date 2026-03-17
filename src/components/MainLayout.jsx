@@ -17,6 +17,7 @@ import ConfigDemo from "../pages/ConfigDemo"
 import WorkflowAdmin from "../pages/WorkflowAdmin"
 import PrintPermohonan from "../pages/PrintPermohonan"
 import PrintBeritaAcara from "../pages/PrintBeritaAcara"
+import AuditLogDownload from "../pages/AuditLogDownload"
 
 // Get current page and id from URL
 const getCurrentPageFromURL = () => {
@@ -53,6 +54,7 @@ const getCurrentPageFromURL = () => {
   if (normalized === "/workflow-admin") return { page: "workflow-admin" }
   if (normalized === "/settings") return { page: "settings" }
   if (normalized === "/config-demo") return { page: "config-demo" }
+  if (normalized === "/audit-log-download") return { page: "audit-log-download" }
   if (normalized.startsWith("/permohonan-pemusnahan/print/")) {
     const parts = normalized.split('/')
     const id = parts.length >= 4 ? parts[3] : null
@@ -217,6 +219,8 @@ const MainLayout = () => {
         return <Settings />
       case "config-demo":
         return <ConfigDemo />
+      case "audit-log-download":
+        return <AuditLogDownload />
       case "permohonan-print":
         if (!pageData?.id) {
           handleNavigate('daftar-ajuan')

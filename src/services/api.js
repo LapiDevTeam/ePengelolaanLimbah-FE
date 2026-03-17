@@ -1206,6 +1206,27 @@ export const dataAPI = {
     }
   },
 
+  // Download audit logs as Excel file.
+  // startDate and endDate are optional; when omitted backend returns all rows.
+  downloadAuditLogExcel: async (startDate = '', endDate = '') => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('start', startDate);
+      if (endDate) params.append('end', endDate);
+
+      const query = params.toString();
+      const endpoint = query ? `/audit-logs/download?${query}` : '/audit-logs/download';
+
+      const response = await api.get(endpoint, {
+        responseType: 'arraybuffer'
+      });
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // === WORKFLOW API ENDPOINTS ===
 
   // Get all approval workflows specific to a request

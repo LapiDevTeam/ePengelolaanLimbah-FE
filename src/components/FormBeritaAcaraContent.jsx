@@ -1,7 +1,9 @@
 import PropTypes from "prop-types";
 import { useMemo, useEffect, useState } from "react";
 import { dataAPI } from "../services/api";
-import { getBaseUrl } from "../utils/urlHelper";import { TokenManager } from '../utils/tokenManager';
+import { API_URL } from "../config/url";
+import { getBaseUrl } from "../utils/urlHelper";
+import { TokenManager } from "../utils/tokenManager";
 export default function FormBeritaAcaraContent({ 
   beritaAcaraId = null, 
   data: initialData = null, 
@@ -97,7 +99,7 @@ export default function FormBeritaAcaraContent({
     }
 
     const BASE_URL_FE = getBaseUrl(); // frontend host with base path
-    const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '');
+    const BASE_URL = API_URL;
 
     const link = `${BASE_URL_FE}/berita-acara-pemusnahan/print/${beritaAcaraId}`;
     const createdAt = new Date().toISOString(); // Use current date as creation timestamp

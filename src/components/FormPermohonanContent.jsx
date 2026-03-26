@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { useMemo, useEffect, useState } from "react";
 import { dataAPI } from "../services/api";
+import { API_URL } from "../config/url";
 import { getBaseUrl } from "../utils/urlHelper";
 import { TokenManager } from "../utils/tokenManager";
 
@@ -155,7 +156,7 @@ export default function FormPermohonanContent({ requestId = null, data: initialD
     }
 
     const BASE_URL_FE = getBaseUrl(); // frontend host with base path
-    const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '');
+    const BASE_URL = API_URL;
 
     const link = `${BASE_URL_FE}/permohonan-pemusnahan/print/${requestId}`;
     const createdAt = data?.tanggal_pengajuan || new Date().toISOString();

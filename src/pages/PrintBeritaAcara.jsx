@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import FormBeritaAcaraContent from "../components/FormBeritaAcaraContent";
 import { dataAPI } from "../services/api";
+import { API_URL } from "../config/url";
 
 export default function PrintBeritaAcara({ beritaAcaraId: propBeritaAcaraId = null }) {
   // Fallback: parse beritaAcaraId from URL like MainLayout (no react-router)
@@ -27,7 +28,7 @@ export default function PrintBeritaAcara({ beritaAcaraId: propBeritaAcaraId = nu
 
   // Debug logging
   console.log('[PrintBeritaAcara] beritaAcaraId:', beritaAcaraId);
-  console.log('[PrintBeritaAcara] API URL:', import.meta.env.VITE_API_URL);
+  console.log('[PrintBeritaAcara] API URL:', API_URL);
 
   useEffect(() => {
     const fetchData = async () => {

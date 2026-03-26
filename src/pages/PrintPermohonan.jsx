@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import FormPermohonanContent from "../components/FormPermohonanContent";
 import { dataAPI } from "../services/api";
+import { API_URL } from "../config/url";
 
 export default function PrintPermohonan({ requestId: propRequestId = null }) {
   // Fallback: parse requestId from URL like MainLayout (no react-router)
@@ -27,7 +28,7 @@ export default function PrintPermohonan({ requestId: propRequestId = null }) {
 
   // Debug logging
   console.log('[PrintPermohonan] requestId:', requestId);
-  console.log('[PrintPermohonan] API URL:', import.meta.env.VITE_API_URL);
+  console.log('[PrintPermohonan] API URL:', API_URL);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { dataAPI } from "../services/api";
+import { API_URL } from "../config/url";
 import { formatDateTimeID, formatDateID, formatTimeID } from "../utils/time";
 import { getBaseUrl } from "../utils/urlHelper";
 import { TokenManager } from "../utils/tokenManager";
@@ -506,7 +507,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
         } else {
           console.warn("Print request failed:", printRes?.data?.message);
           // Fallback to direct URL with token
-          const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/$/, "");
+          const BASE_URL = API_URL;
           const printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(
             link
           )}&beritaAcaraId=${encodeURIComponent(beritaAcaraId)}&createdAt=${encodeURIComponent(createdAt)}`;
@@ -515,7 +516,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
       } catch (printErr) {
         console.warn("Print API call failed:", printErr.message);
         // Fallback to direct URL with token
-        const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/$/, "");
+        const BASE_URL = API_URL;
         const printUrl = `${BASE_URL}/document-generation/print-berita-acara-pemusnahan?link=${encodeURIComponent(
           link
         )}&beritaAcaraId=${encodeURIComponent(beritaAcaraId)}&createdAt=${encodeURIComponent(createdAt)}`;
@@ -603,7 +604,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
         } else {
           console.warn("Print request failed:", printRes?.data?.message);
           // Fallback to direct URL with token
-          const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/$/, "");
+          const BASE_URL = API_URL;
           const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(
             link
           )}&createdAt=${encodeURIComponent(createdAt)}`;
@@ -612,7 +613,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
       } catch (printErr) {
         console.warn("Print API call failed:", printErr.message);
         // Fallback to direct URL with token
-        const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/$/, "");
+        const BASE_URL = API_URL;
         const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(
           link
         )}&createdAt=${encodeURIComponent(createdAt)}`;

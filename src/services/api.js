@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../api/auth';
+import { API_URL } from '../config/url';
 import { DEFAULT_JENIS_OPTIONS, DEFAULT_GOLONGAN_OPTIONS } from '../constants/referenceData';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },

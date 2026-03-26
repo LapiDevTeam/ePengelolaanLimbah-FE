@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { dataAPI } from "../services/api";
+import { API_URL } from "../config/url";
 import { formatDateTimeID, formatDateID, toJakartaIsoFromLocal } from "../utils/time";
 import { getBaseUrl } from "../utils/urlHelper";
 import { TokenManager } from "../utils/tokenManager";
@@ -437,13 +438,13 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
                           const url = window.URL.createObjectURL(blob);
                           window.open(url, '_blank');
                         } else {
-                          const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '');
+                          const BASE_URL = API_URL;
                           const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(link)}&createdAt=${encodeURIComponent(createdAt)}`;
                           window.open(TokenManager.addTokenToUrl(printUrl), '_blank');
                         }
                       } catch (printErr) {
                         console.warn('Print API call failed:', printErr.message);
-                        const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/$/, '');
+                        const BASE_URL = API_URL;
                         const printUrl = `${BASE_URL}/document-generation/print-permohonan-pemusnahan?link=${encodeURIComponent(link)}&createdAt=${encodeURIComponent(createdAt)}`;
                         window.open(TokenManager.addTokenToUrl(printUrl), '_blank');
                       }

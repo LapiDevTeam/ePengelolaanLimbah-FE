@@ -1,5 +1,7 @@
+import { API_URL } from "../config/url";
+
 // API functions for user profile
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'; // Use same base URL as main API
+const API_BASE_URL = API_URL; // Use same base URL as main API
 
 export const profileAPI = {
   // Get current user profile

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { API_BASE_URL } from "../api/auth";
 import { dataAPI } from "../services/api";
 
 const AuthContext = createContext(null);
@@ -162,7 +163,7 @@ export const AuthProvider = ({ children }) => {
   // Initial login to check user credentials and get delegation options
   const checkCredentials = useCallback(async (username, password) => {
     try {
-      const response = await fetch("http://192.168.1.38/api/lms-dev/v1/login", {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -202,7 +203,7 @@ export const AuthProvider = ({ children }) => {
         requestBody.delegatedAs = delegatedAs;
       }
 
-      const response = await fetch("http://192.168.1.38/api/lms-dev/v1/login", {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),

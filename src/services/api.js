@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../api/auth';
 import { DEFAULT_JENIS_OPTIONS, DEFAULT_GOLONGAN_OPTIONS } from '../constants/referenceData';
 
 // Create axios instance with base configuration
@@ -543,8 +544,8 @@ export const dataAPI = {
   // Get delegation options for a user
   getDelegationOptions: async (username, password) => {
     try {
-      const loginUrl = 'http://192.168.1.38/api/lms-dev/v1/login';
-      const delegationUrl = 'http://192.168.1.38/api/lms-dev/v1/delegation-options';
+      const loginUrl = `${API_BASE_URL}/login`;
+      const delegationUrl = `${API_BASE_URL}/delegation-options`;
 
       // 1) Try to login first to obtain a token and possibly delegation options
       const loginResp = await fetch(loginUrl, {

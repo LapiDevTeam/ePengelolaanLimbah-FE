@@ -1,3 +1,5 @@
+import filePath from "../config/path";
+
 /**
  * Get the base URL including any subdirectory path
  * Handles deployment in subdirectories like /ePemusnahanLimbah-dev
@@ -7,12 +9,13 @@
 export const getBaseUrl = () => {
   const origin = window.location.origin;
   const pathname = window.location.pathname;
+  const dynamicPath = `/${filePath}`;
 
   // Check if app is deployed in a subdirectory
   // Look for /ePemusnahanLimbah-dev at the start of the path
   const basePath =
-    pathname.startsWith("/ePemusnahanLimbah-dev") || pathname.includes("/ePemusnahanLimbah-dev")
-      ? "/ePemusnahanLimbah-dev"
+    pathname.startsWith(dynamicPath) || pathname.includes(dynamicPath)
+      ? dynamicPath
       : "";
 
   return origin + basePath;
@@ -24,7 +27,8 @@ export const getBaseUrl = () => {
  */
 export const getBasePath = () => {
   const pathname = window.location.pathname;
-  return pathname.startsWith("/ePemusnahanLimbah-dev") || pathname.includes("/ePemusnahanLimbah-dev")
-    ? "/ePemusnahanLimbah-dev"
+  const dynamicPath = `/${filePath}`;
+  return pathname.startsWith(dynamicPath) || pathname.includes(dynamicPath)
+    ? dynamicPath
     : "";
 };

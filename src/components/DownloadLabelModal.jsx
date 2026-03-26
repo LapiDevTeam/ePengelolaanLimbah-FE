@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { dataAPI } from "../services/api";
 import { toJakartaIsoFromLocal, formatDateID } from "../utils/time";
+import filePath from "../config/path";
 import jsPDF from 'jspdf';
 
 // Preview component using the same drawing logic
@@ -277,41 +278,41 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     // Special case for A106d - requires checking bentuk_limbah for flame symbol type
     if (kodeLimbah === "A106d") {
       // A106d always has toxic symbol
-      symbols.push("/ePemusnahanLimbah-dev/hazard/beracun.png");
+      symbols.push(`/${filePath}/hazard/beracun.png`);
 
       // A106d has "mudah menyala/mudah terbakar" - check bentuk limbah for appropriate symbol
       if (bentuk === "Cair") {
         // For liquid A106d, use the available liquid flammable symbol
-        symbols.push("/ePemusnahanLimbah-dev/hazard/cairan_muda_terbakar.png");
+        symbols.push(`/${filePath}/hazard/cairan_muda_terbakar.png`);
       } else if (bentuk === "Padat") {
         // For solid A106d, use padatan mudah menyala symbol
-        symbols.push("/ePemusnahanLimbah-dev/hazard/padatan_mudah_menyala.png");
+        symbols.push(`/${filePath}/hazard/padatan_mudah_menyala.png`);
       }
     } else {
       // General rules for other waste codes - sifat_limbah already contains "cairan" or "padatan"
 
       // 1. Check for toxic/poisonous
       if (sifatLower.includes("beracun") || sifatLower.includes("toxic")) {
-        symbols.push("/ePemusnahanLimbah-dev/hazard/beracun.png");
+        symbols.push(`/${filePath}/hazard/beracun.png`);
       }
 
       // 2. Check for specific flammable types - using updated file names
       if (sifatLower.includes("cairan mudah menyala") || sifatLower.includes("cairan mudah terbakar")) {
-        symbols.push("/ePemusnahanLimbah-dev/hazard/cairan_muda_terbakar.png");
+        symbols.push(`/${filePath}/hazard/cairan_muda_terbakar.png`);
       }
 
       if (sifatLower.includes("padatan mudah menyala")) {
-        symbols.push("/ePemusnahanLimbah-dev/hazard/padatan_mudah_menyala.png");
+        symbols.push(`/${filePath}/hazard/padatan_mudah_menyala.png`);
       }
 
       if (sifatLower.includes("padatan mudah terbakar")) {
         // Use padatan mudah menyala as fallback since padatan_mudah_terbakar.png doesn't exist
-        symbols.push("/ePemusnahanLimbah-dev/hazard/padatan_mudah_menyala.png");
+        symbols.push(`/${filePath}/hazard/padatan_mudah_menyala.png`);
       }
 
       // 3. Check for explosive - now available!
       if (sifatLower.includes("mudah meledak") || sifatLower.includes("explosive")) {
-        symbols.push("/ePemusnahanLimbah-dev/hazard/mudah_meledak.png");
+        symbols.push(`/${filePath}/hazard/mudah_meledak.png`);
       }
 
       // 4. Check for campuran (mixture) - file no longer available
@@ -323,7 +324,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
 
     // Default fallback - if no symbols found, add general toxic
     if (symbols.length === 0) {
-      symbols.push("/ePemusnahanLimbah-dev/hazard/beracun.png");
+      symbols.push(`/${filePath}/hazard/beracun.png`);
     }
 
     // Remove duplicates and limit to maximum 3 symbols
@@ -386,7 +387,7 @@ const DownloadLabelModal = ({ isOpen, onClose, requestId, useMockData = false })
     // Load logo image first
     let logoImg;
     try {
-      logoImg = await loadImage('/ePemusnahanLimbah-dev/logo_bnw.png');
+      logoImg = await loadImage(`/${filePath}/logo_bnw.png`);
     } catch (error) {
       console.warn('Failed to load logo image:', error);
       logoImg = null;

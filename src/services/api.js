@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../api/auth';
-import { API_URL } from '../config/url';
+import { API_URL, API_APPROVAL_URL } from '../config/url';
 import { DEFAULT_JENIS_OPTIONS, DEFAULT_GOLONGAN_OPTIONS } from '../constants/referenceData';
 
 // Create axios instance with base configuration
@@ -1256,8 +1256,8 @@ export const dataAPI = {
   // This calls the external URL used by backend for approval list and returns items filtered by Appr_No if provided
   getExternalApprovalList: async (apprNo = null) => {
     try {
-      // Use the external host directly as requested
-      const externalUrl = import.meta.env.VITE_EXTERNAL_APPROVAL_URL || 'http://192.168.1.38/api/global-dev/v1/custom/list-approval-magang';
+      // Use centralized approval URL from config only
+      const externalUrl = API_APPROVAL_URL;
 
       // For this external call we don't want to include the Authorization header added by axios instance
       const externalRes = await axios.get(externalUrl, { headers: { 'Content-Type': 'application/json' } });

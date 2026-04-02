@@ -73,6 +73,7 @@ const DataTable = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedColumn, setSelectedColumn] = useState("noPermohonan");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc");
   const [data, setData] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -143,7 +144,8 @@ const DataTable = ({
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            group: groupFilter
+            group: groupFilter,
+            sortOrder: sortOrder
           });
         } else if (viewMode === "all-permohonan") {
           // All Permohonan tab - different scope based on user
@@ -164,7 +166,8 @@ const DataTable = ({
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
             userOnly: false,
-            group: groupFilter
+            group: groupFilter,
+            sortOrder: sortOrder
           };
           
           // Add status filter
@@ -195,7 +198,8 @@ const DataTable = ({
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            group: groupFilter
+            group: groupFilter,
+            sortOrder: sortOrder
           });
         } else if (viewMode === "rejected") {
           // Fetch rejected requests (only for HSE Manager)
@@ -204,7 +208,8 @@ const DataTable = ({
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            group: groupFilter
+            group: groupFilter,
+            sortOrder: sortOrder
           });
         } else if (viewMode === "verifikasi") {
           // Fetch verification requests (for HSE/KL team)
@@ -213,7 +218,8 @@ const DataTable = ({
             limit: itemsPerPage,
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
-            group: groupFilter
+            group: groupFilter,
+            sortOrder: sortOrder
           });
         } else {
           // Dept. Requests tab - show all requests from user's department,
@@ -228,7 +234,8 @@ const DataTable = ({
             deptOnly: !!deptId,
             userDept: deptId,
             excludeCompleted: false,
-            group: groupFilter
+            group: groupFilter,
+            sortOrder: sortOrder
           });
         }
         
@@ -247,7 +254,7 @@ const DataTable = ({
     };
 
     fetchRequests();
-  }, [currentPage, searchTerm, selectedColumn, user, refreshKey, viewMode, statusFilter, groupFilter]);
+  }, [currentPage, searchTerm, selectedColumn, user, refreshKey, viewMode, statusFilter, groupFilter, sortOrder]);
 
   // Add event listener for data refresh
   useEffect(() => {
@@ -558,11 +565,6 @@ const DataTable = ({
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Filter Icon */}
-            <button className="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
-              <FilterIcon />
-            </button>
-
             {/* Column Filter Dropdown */}
             <div className="relative">
               <select
@@ -619,8 +621,17 @@ const DataTable = ({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Tgl. Pengajuan
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                No. Permohonan
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors"
+                onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+              >
+                <span className="flex items-center gap-1">
+                  No. Permohonan
+                  <span className="inline-flex flex-col text-[10px] leading-none">
+                    <span className={sortOrder === 'asc' ? 'text-green-600' : 'text-gray-300'}>▲</span>
+                    <span className={sortOrder === 'desc' ? 'text-green-600' : 'text-gray-300'}>▼</span>
+                  </span>
+                </span>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Bagian

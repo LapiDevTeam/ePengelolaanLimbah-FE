@@ -78,7 +78,8 @@ export const dataAPI = {
         additionalGroups = '',
         // Dept. Requests tab: show all requests from user's department
         deptOnly = false,
-        userDept = ''
+        userDept = '',
+        sortOrder = 'desc'
       } = params;
       
       // Build query params
@@ -129,6 +130,10 @@ export const dataAPI = {
         if (additionalGroups) {
           queryParams.append('additionalGroups', additionalGroups);
         }
+      }
+
+      if (sortOrder) {
+        queryParams.append('sortOrder', sortOrder);
       }
 
       const response = await api.get(`/permohonan?${queryParams}`);
@@ -1657,7 +1662,7 @@ export const dataAPI = {
   // Get user's pending approvals (for managers, HSE, etc.)
   getPendingApprovals: async (params = {}) => {
     try {
-      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', group = null } = params;
+      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', group = null, sortOrder = 'desc' } = params;
       
       // Build query params
       const queryParams = new URLSearchParams({
@@ -1676,6 +1681,10 @@ export const dataAPI = {
       
       if (group) {
         queryParams.append('group', group);
+      }
+
+      if (sortOrder) {
+        queryParams.append('sortOrder', sortOrder);
       }
 
       const response = await api.get(`/permohonan?${queryParams}`);
@@ -1729,7 +1738,7 @@ export const dataAPI = {
   // Get requests processed (approved/rejected) by the current user (not including own created requests)
   getProcessedByUser: async (params = {}) => {
     try {
-      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', group = null } = params;
+      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', group = null, sortOrder = 'desc' } = params;
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -1739,6 +1748,7 @@ export const dataAPI = {
       if (searchTerm) queryParams.append('search', searchTerm);
       if (selectedColumn) queryParams.append('column', selectedColumn);
       if (group) queryParams.append('group', group);
+      if (sortOrder) queryParams.append('sortOrder', sortOrder);
 
       const response = await api.get(`/permohonan?${queryParams}`);
       if (response.data.success) {
@@ -1780,7 +1790,7 @@ export const dataAPI = {
   // Fetch rejected requests (for HSE Manager)
   getRejectedRequests: async (params = {}) => {
     try {
-      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', group = null } = params;
+      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', group = null, sortOrder = 'desc' } = params;
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -1790,6 +1800,7 @@ export const dataAPI = {
       if (searchTerm) queryParams.append('search', searchTerm);
       if (selectedColumn) queryParams.append('column', selectedColumn);
       if (group) queryParams.append('group', group);
+      if (sortOrder) queryParams.append('sortOrder', sortOrder);
 
       const response = await api.get(`/permohonan?${queryParams}`);
       if (response.data.success) {
@@ -1831,7 +1842,7 @@ export const dataAPI = {
   // Fetch verification requests (for HSE/KL team - requests waiting for verification)
   getVerificationRequests: async (params = {}) => {
     try {
-      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', group = null } = params;
+      const { page = 1, limit = 8, searchTerm = '', selectedColumn = '', group = null, sortOrder = 'desc' } = params;
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -1844,6 +1855,7 @@ export const dataAPI = {
       if (searchTerm) queryParams.append('search', searchTerm);
       if (selectedColumn) queryParams.append('column', selectedColumn);
       if (group) queryParams.append('group', group);
+      if (sortOrder) queryParams.append('sortOrder', sortOrder);
 
       const response = await api.get(`/permohonan?${queryParams}`);
       if (response.data.success) {

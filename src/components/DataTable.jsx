@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useConfigContext } from "../contexts/ConfigContext";
 import RejectModal from "./RejectModal";
 import ApproveModal from "./ApproveModal";
+import DetailAjuan from "../pages/DetailAjuan";
 import { formatDateID } from "../utils/time";
 import { 
   getJenisDisplayName, 
@@ -94,6 +95,8 @@ const DataTable = ({
   });
   // Approve modal state
   const [approveModal, setApproveModal] = useState({ isOpen: false, itemId: null, loading: false });
+  // Detail ajuan modal state
+  const [detailModal, setDetailModal] = useState({ isOpen: false, itemId: null });
   
   const itemsPerPage = 8;
   const { user } = useAuth();
@@ -637,7 +640,7 @@ const DataTable = ({
                 Bagian
               </th>
               {isApproverView && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-56 min-w-[14rem]">
                   Pemohon
                 </th>
               )}
@@ -679,15 +682,19 @@ const DataTable = ({
                 return (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTimestamp(item.tanggal)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.noPermohonan}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[11rem]">
+                    <div className="truncate" title={item.noPermohonan || '-'}>{item.noPermohonan || '-'}</div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bagian || '-'}</td>
                   {isApproverView && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {item.requesterName || 'Unknown'}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-56 min-w-[14rem] max-w-[14rem]">
+                      <div className="truncate" title={item.requesterName || 'Unknown'}>{item.requesterName || 'Unknown'}</div>
                     </td>
                   )}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{golonganName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{jenisName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[12rem]">
+                    <div className="truncate" title={jenisName}>{jenisName}</div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <span
                       className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
@@ -723,17 +730,7 @@ const DataTable = ({
                       <button
                         className="px-3 py-1 text-xs bg-sky-100 text-sky-700 rounded hover:bg-sky-200 transition-colors"
                         onClick={() => {
-                          if (onNavigate) {
-                            // Build navigation context for Back button
-                            const fromContext = {
-                              page: 'daftar-ajuan',
-                              pageAlias: groupFilter ? `daftar-ajuan-${groupFilter === 'limbah-b3' ? 'b3' : groupFilter === 'recall-precursor' ? 'recall-precursor-oot' : groupFilter}` : 'daftar-ajuan-b3',
-                              viewMode: viewMode,
-                              group: groupFilter,
-                              pageNumber: currentPage
-                            };
-                            onNavigate('detail-ajuan', { id: item.id, fromView: viewMode, from: fromContext });
-                          }
+                          setDetailModal({ isOpen: true, itemId: item.id });
                         }}
                         title="View Details"
                       >
@@ -818,6 +815,19 @@ const DataTable = ({
         onConfirm={handleApproveConfirm}
         loading={approveModal.loading}
       />
+      {/* Detail Ajuan Modal */}
+      {detailModal.isOpen && (
+        <DetailAjuan
+          asModal={true}
+          onClose={() => {
+            setDetailModal({ isOpen: false, itemId: null });
+            setRefreshKey(prev => prev + 1);
+          }}
+          applicationId={detailModal.itemId}
+          navigationData={{ fromView: viewMode, group: groupFilter }}
+          onNavigate={onNavigate}
+        />
+      )}
     </div>
   );
 };

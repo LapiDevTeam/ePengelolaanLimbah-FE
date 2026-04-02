@@ -8,6 +8,13 @@ import { useAuth } from "../contexts/AuthContext";
 import { useConfigContext } from "../contexts/ConfigContext";
 import DownloadLabelModal from "../components/DownloadLabelModal";
 import FieldVerificationModal from "../components/FieldVerificationModal";
+
+const XIcon = () => (
+  <div className="w-5 h-5 relative">
+    <div className="absolute top-2 left-0 w-5 h-0.5 bg-current transform rotate-45 origin-center"></div>
+    <div className="absolute top-2 left-0 w-5 h-0.5 bg-current transform -rotate-45 origin-center"></div>
+  </div>
+);
 import RejectModal from "../components/RejectModal";
 import ApproveModal from "../components/ApproveModal";
 import WorkflowSteps from "../components/WorkflowSteps";
@@ -26,7 +33,7 @@ const formatTimestamp = (timestamp) => {
   return formatDateTimeID(timestamp);
 };
 
-const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
+const DetailAjuan = ({ onNavigate, applicationId, navigationData = {}, asModal = false, onClose }) => {
   const { user } = useAuth();
   const { getStatusStyle } = useConfigContext();
   const [data, setData] = useState(null);
@@ -203,6 +210,10 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
   }, [applicationId]);
 
   const handleBack = () => {
+    if (asModal && onClose) {
+      onClose();
+      return;
+    }
     if (onNavigate) {
       // Use navigation context if available, otherwise fallback to default
       const fromContext = navigationData?.from;
@@ -245,8 +256,10 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
         window.dispatchEvent(new CustomEvent('ajuanDataRefresh'));
         window.dispatchEvent(new CustomEvent('refreshPendingApprovals'));
         
-        // Navigate back to daftar-ajuan after successful approval
-        if (onNavigate) {
+        // Navigate back or close modal after successful approval
+        if (asModal && onClose) {
+          onClose();
+        } else if (onNavigate) {
           onNavigate('daftar-ajuan');
         } else {
           window.location.href = '/daftar-ajuan';
@@ -286,8 +299,33 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
     }
   };
 
-  if (loading) {
+  // Modal wrapper helper
+  const wrapInModal = (content) => {
+    if (!asModal) return content;
     return (
+      <div
+        className="fixed inset-x-0 top-16 bottom-0 bg-black/30 backdrop-blur-sm flex items-start justify-center z-40 p-4"
+        onClick={(e) => { if (e.target === e.currentTarget) handleBack(); }}
+      >
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-[95vw] max-h-[calc(100vh-5rem)] overflow-y-auto">
+          {/* Modal Close Header */}
+          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 rounded-t-xl">
+            <h3 className="text-lg font-semibold text-gray-900">Detail Ajuan Pemusnahan</h3>
+            <button
+              onClick={handleBack}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XIcon />
+            </button>
+          </div>
+          {content}
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return wrapInModal(
       <div className="p-6">
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
@@ -300,7 +338,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
   }
 
   if (error) {
-    return (
+    return wrapInModal(
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error}</p>
@@ -316,7 +354,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
   }
 
   if (!data) {
-    return (
+    return wrapInModal(
       <div className="p-6">
         <div className="text-center py-12">
           <p className="text-gray-600">Data tidak ditemukan</p>
@@ -335,7 +373,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
   const isRecall = (data.details.golonganLimbah || '').toLowerCase().includes('recall');
   const isKLUser = isFromKLDepartment(user);
 
-  return (
+  return wrapInModal(
     <div className="p-6">
       {/* Breadcrumb */}
       <div className="mb-6">
@@ -465,12 +503,14 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {} }) => {
 
             {/* Approve/Reject buttons moved below the Lampiran table */}
 
-            <button
-              onClick={handleBack}
-              className="px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
-            >
-              Kembali
-            </button>
+            {!asModal && (
+              <button
+                onClick={handleBack}
+                className="px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+              >
+                Kembali
+              </button>
+            )}
           </div>
         </div>
       </div>

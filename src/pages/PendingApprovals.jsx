@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useConfigContext } from "../contexts/ConfigContext";
 import RejectModal from "../components/RejectModal";
 import ApproveModal from "../components/ApproveModal";
+import DetailAjuan from "./DetailAjuan";
 import { formatDateID } from "../utils/time";
 import { 
   getJenisDisplayName, 
@@ -69,6 +70,8 @@ const PendingApprovals = ({ onNavigate }) => {
   });
   // Approve modal state
   const [approveModal, setApproveModal] = useState({ isOpen: false, itemId: null, loading: false });
+  // Detail ajuan modal state
+  const [detailModal, setDetailModal] = useState({ isOpen: false, itemId: null });
   
   const itemsPerPage = 8;
   const { user } = useAuth();
@@ -305,7 +308,7 @@ const PendingApprovals = ({ onNavigate }) => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   No. Permohonan
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-56 min-w-[14rem]">
                   Pemohon
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -343,11 +346,17 @@ const PendingApprovals = ({ onNavigate }) => {
                   return (
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTimestamp(item.tanggal)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.noPermohonan}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.requesterName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[11rem]">
+                        <div className="truncate" title={item.noPermohonan || '-'}>{item.noPermohonan || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 w-56 min-w-[14rem] max-w-[14rem]">
+                        <div className="truncate" title={item.requesterName || '-'}>{item.requesterName || '-'}</div>
+                      </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bagian}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{golonganName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{jenisName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[12rem]">
+                        <div className="truncate" title={jenisName}>{jenisName}</div>
+                      </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <span
                         className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
@@ -360,7 +369,7 @@ const PendingApprovals = ({ onNavigate }) => {
                       <div className="flex items-center gap-2">
                         <button
                           className="px-3 py-1 text-xs bg-sky-100 text-sky-700 rounded hover:bg-sky-200 transition-colors"
-                          onClick={() => onNavigate && onNavigate('detail-ajuan', { id: item.id })}
+                          onClick={() => setDetailModal({ isOpen: true, itemId: item.id })}
                           title="View Details"
                         >
                           View
@@ -466,6 +475,20 @@ const PendingApprovals = ({ onNavigate }) => {
           itemId={rejectModal.itemId}
           loading={rejectModal.loading}
         />
+        {/* Detail Ajuan Modal */}
+        {detailModal.isOpen && (
+          <DetailAjuan
+            asModal={true}
+            onClose={() => {
+              setDetailModal({ isOpen: false, itemId: null });
+              // Trigger refresh of pending approvals list
+              window.dispatchEvent(new CustomEvent('refreshPendingApprovals'));
+            }}
+            applicationId={detailModal.itemId}
+            navigationData={{}}
+            onNavigate={onNavigate}
+          />
+        )}
       </div>
     </div>
   );

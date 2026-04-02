@@ -93,6 +93,9 @@ const FieldVerificationModal = ({ isOpen, onClose, onComplete, ajuanData, loadin
   const [rejectError, setRejectError] = useState("");
   const [currentUserInfo, setCurrentUserInfo] = useState(null);
 
+  // AD1 and AD2 are treated as the same group for pemohon verification roles
+  const isADGroup = (dept) => dept === 'AD1' || dept === 'AD2';
+
   // Helper function to determine user's eligible roles based on department and job level
   const getUserEligibleRoles = (user, permohonanDept) => {
     const eligibleRoles = [];
@@ -103,7 +106,8 @@ const FieldVerificationModal = ({ isOpen, onClose, onComplete, ajuanData, loadin
     // Determine if user belongs to HSE side (for verification purposes)
     const isHSEDept = userDept === "KL";
     // Determine if user is from pemohon department (must normalize both to uppercase for comparison)
-    const isPemohonDept = pemohonDept && userDept === pemohonDept;
+    // Special case: AD1 and AD2 are treated as the same group - AD2 can verify AD1 requests and vice versa
+    const isPemohonDept = pemohonDept && (userDept === pemohonDept || (isADGroup(userDept) && isADGroup(pemohonDept)));
 
     // HSE department users always have HSE roles (they verify from HSE side)
     if (isHSEDept) {

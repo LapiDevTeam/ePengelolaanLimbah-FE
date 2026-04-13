@@ -284,7 +284,12 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {}, asModal =
     try {
       const response = await dataAPI.rejectDestructionRequest(id, reason);
       if (response.data.success) {
-        showSuccess(response.data.message);
+        const newDraft = response.data.newDraft;
+        if (newDraft) {
+          showSuccess(`${response.data.message} Draft baru (ID: ${newDraft.request_id}) telah dibuat untuk pemohon.`);
+        } else {
+          showSuccess(response.data.message);
+        }
         setRejectModal({ isOpen: false, itemId: null, loading: false });
         refreshData();
         window.dispatchEvent(new CustomEvent('ajuanDataRefresh'));
@@ -555,32 +560,39 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {}, asModal =
           />
         </div>
 
-        {/* Manager Feedback Section - Show if draft with rejection reason */}
-        {data.status === "Draft" && data.alasanPenolakan && (
-          <div className="p-6 border-b border-gray-200">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <div className="w-5 h-5 text-yellow-400">
-                    <svg fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
+        {/* Draft Feedback Section - Show if draft with rejection reason */}
+        {data.status === "Draft" && data.alasanPenolakan && (() => {
+          const VERIFIKASI_PREFIX = 'Reject Verifikasi - ';
+          const isVerifikasiReturn = data.alasanPenolakan.startsWith(VERIFIKASI_PREFIX);
+          const displayReason = isVerifikasiReturn
+            ? data.alasanPenolakan.slice(VERIFIKASI_PREFIX.length)
+            : data.alasanPenolakan;
+          return (
+            <div className="p-6 border-b border-gray-200">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <div className="w-5 h-5 text-yellow-400">
+                      <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    Dikembalikan oleh Manager
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p className="font-medium">Feedback Manager:</p>
-                    <p className="mt-1">{data.alasanPenolakan}</p>
-                    <p className="mt-2 font-medium">Silakan perbaiki permohonan dan submit ulang.</p>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      {isVerifikasiReturn ? 'Dikembalikan oleh KL' : 'Dikembalikan oleh Manager'}
+                    </h3>
+                    <div className="mt-2 text-sm text-yellow-700">
+                      <p className="font-medium">{isVerifikasiReturn ? 'Feedback KL:' : 'Feedback Manager:'}</p>
+                      <p className="mt-1">{displayReason}</p>
+                      <p className="mt-2 font-medium">Silakan perbaiki permohonan dan submit ulang.</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
 
         {/* Rejection Reason Section - Only show if status is Rejected */}

@@ -374,8 +374,9 @@ export const dataAPI = {
       return {
         data: {
           success: true,
-          message: 'Destruction request rejected successfully',
-          data: response.data
+          message: response.data?.message || 'Destruction request rejected successfully',
+          data: response.data?.data || response.data,
+          newDraft: response.data?.newDraft || null
         }
       };
     } catch (error) {

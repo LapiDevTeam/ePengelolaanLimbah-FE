@@ -262,9 +262,18 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
             updateSummaryFields(mappedDetails);
           }
           
-          // Check if this is a draft returned from manager rejection
+          // Check if this is a draft with a rejection reason (manager return or verifikasi lapangan new draft).
+          // Verifikasi Lapangan rejection drafts are identified by the 'Reject Verifikasi - ' prefix
+          // on alasan_penolakan, which is set by the backend when creating the new draft.
           if (status === 'Draft' && alasanPenolakan) {
-            setEditError(`Permohonan dikembalikan oleh Manager untuk diperbaiki. Alasan: ${alasanPenolakan}`);
+            const VERIFIKASI_PREFIX = 'Reject Verifikasi - ';
+            const isFromVerifikasi = alasanPenolakan.startsWith(VERIFIKASI_PREFIX);
+            if (isFromVerifikasi) {
+              const actualReason = alasanPenolakan.slice(VERIFIKASI_PREFIX.length);
+              setEditError(actualReason);
+            } else {
+              setEditError(`Permohonan dikembalikan oleh Manager untuk diperbaiki. Alasan: ${alasanPenolakan}`);
+            }
           }
           
         } else {
@@ -735,8 +744,11 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
 
   // Show error state if there's an edit error
   if (editError) {
-    const isManagerReturn = originalData?.status === 'Draft' && originalData?.alasan_penolakan;
-    const isError = !isManagerReturn;
+    const VERIFIKASI_PREFIX = 'Reject Verifikasi - ';
+    const isVerifikasiReturn = originalData?.status === 'Draft' && originalData?.alasan_penolakan?.startsWith(VERIFIKASI_PREFIX);
+    const isManagerReturn = originalData?.status === 'Draft' && originalData?.alasan_penolakan && !isVerifikasiReturn;
+    const isDraftWithNote = isManagerReturn || isVerifikasiReturn;
+    const isError = !isDraftWithNote;
     
     return (
       <div className="p-6">
@@ -753,16 +765,18 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
             </div>
             <div className="ml-3">
               <h3 className={`text-sm font-medium ${isError ? 'text-red-800' : 'text-yellow-800'}`}>
-                {isError ? 'Tidak dapat mengedit permohonan' : 'Permohonan Dikembalikan'}
+                {isError ? 'Tidak dapat mengedit permohonan' : isVerifikasiReturn ? 'Dikembalikan oleh KL' : 'Permohonan Dikembalikan'}
               </h3>
-              <p className={`mt-2 text-sm ${isError ? 'text-red-700' : 'text-yellow-700'}`}>{editError}</p>
-              {isManagerReturn && (
+              <p className={`mt-2 text-sm ${isError ? 'text-red-700' : 'text-yellow-700'}`}>
+                {isVerifikasiReturn ? <><span className="font-medium">Feedback KL:</span> {editError}</> : editError}
+              </p>
+              {isDraftWithNote && (
                 <p className="mt-2 text-sm text-yellow-700">
-                  Silakan perbaiki permohonan sesuai feedback dan submit ulang.
+                  Silakan perbaiki permohonan sesuai catatan di atas dan submit ulang.
                 </p>
               )}
               <div className="mt-4">
-                {isManagerReturn ? (
+                {isDraftWithNote ? (
                   <button
                     onClick={() => setEditError(null)}
                     className="bg-yellow-100 px-4 py-2 text-sm text-yellow-800 rounded hover:bg-yellow-200 transition-colors mr-2"

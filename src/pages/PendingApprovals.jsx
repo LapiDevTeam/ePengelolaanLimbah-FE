@@ -209,7 +209,12 @@ const PendingApprovals = ({ onNavigate }) => {
     try {
       const response = await dataAPI.rejectDestructionRequest(id, reason);
       if (response.data.success) {
-        showSuccess(response.data.message);
+        const newDraft = response.data.newDraft;
+        if (newDraft) {
+          showSuccess(`${response.data.message} Draft baru (ID: ${newDraft.request_id}) telah dibuat untuk pemohon.`);
+        } else {
+          showSuccess(response.data.message);
+        }
         // Re-fetch data to update the list
         const updatedResponse = await dataAPI.getPendingApprovals({
           page: currentPage,

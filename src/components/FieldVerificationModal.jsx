@@ -474,7 +474,8 @@ const FieldVerificationModal = ({ isOpen, onClose, onComplete, ajuanData, loadin
           completedAt: toJakartaIsoFromLocal(),
           status: 'field_rejected',
           rejectedBy: currentUserInfo?.name || 'Unknown',
-          rejectReason: rejectReason.trim()
+          rejectReason: rejectReason.trim(),
+          newDraft: response.data.newDraft || null
         };
         onComplete && onComplete(finalVerificationData);
       } else {

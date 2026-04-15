@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import BeritaAcaraDataTable from "../components/BeritaAcaraDataTable";
 import { useAuth } from "../contexts/AuthContext";
-import { canCreateBeritaAcaraByDeptLevel } from "../constants/accessRights";
 import { dataAPI } from "../services/api";
 import { showInfo } from "../utils/sweetAlert";
 
@@ -10,24 +9,13 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
   const [isCreatorAllowed, setIsCreatorAllowed] = useState(false);
   const [creatorCheckLoading, setCreatorCheckLoading] = useState(true);
 
-  // Show "Tambah Berita Acara" to:
-  // 1. Users with dept+jobLevel allowed for this group (central config in accessRights.js)
-  //    - QA (ofc/spv/mgr): only for 'recall'
-  //    - PN1 (ofc/spv/mgr): only for 'recall-precursor'
-  // 2. KL officers registered as Appr_No=1 or Appr_No=2 (external approval API) — all groups
+  // Show "Tambah Berita Acara" to users registered in external approval API:
+  //   - KL officers:  Appr_No=1 (Supervisor/Officer) or Appr_No=2 (Manager) — all groups
+  //   - QA officers:  Appr_No=3 — only for 'recall' group
+  //   - PN1 officers: Appr_No=3 — only for 'recall-precursor' group
   useEffect(() => {
     let mounted = true;
 
-    // Check centralized dept + job level + group permission first
-    if (canCreateBeritaAcaraByDeptLevel(user, group)) {
-      if (mounted) {
-        setIsCreatorAllowed(true);
-        setCreatorCheckLoading(false);
-      }
-      return () => { mounted = false; };
-    }
-
-    // Fallback: check KL officer/manager via external approval API (all groups)
     const checkCreator = async () => {
       setCreatorCheckLoading(true);
       try {
@@ -36,12 +24,25 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
           const items = res.data.data || [];
           const appItems = items.filter(i => String(i.Appr_ApplicationCode || '') === 'ePengelolaan_Limbah_Berita_Acara');
           const myNik = user && (user.log_NIK || user.emp_NIK || user.log_nik || user.NIK);
-          const allowed = appItems.some(it =>
-            String(it.Appr_DeptID || '').toUpperCase() === 'KL' &&
-            String(it.Appr_ID) === String(myNik) &&
-            (Number(it.Appr_No) === 1 || Number(it.Appr_No) === 2)
+          const myEntries = appItems.filter(it => String(it.Appr_ID) === String(myNik));
+
+          // KL (Appr_No 1 or 2) → allowed for all groups
+          const isKL = myEntries.some(e =>
+            (Number(e.Appr_No) === 1 || Number(e.Appr_No) === 2) &&
+            String((e.Appr_DeptID || '').toUpperCase()) === 'KL'
           );
-          if (mounted) setIsCreatorAllowed(allowed);
+          // QA (Appr_No 3) → only for 'recall' group
+          const isQA = group === 'recall' && myEntries.some(e =>
+            Number(e.Appr_No) === 3 &&
+            String((e.Appr_DeptID || '').toUpperCase()) === 'QA'
+          );
+          // PN1 (Appr_No 3) → only for 'recall-precursor' group
+          const isPN1 = group === 'recall-precursor' && myEntries.some(e =>
+            Number(e.Appr_No) === 3 &&
+            String((e.Appr_DeptID || '').toUpperCase()) === 'PN1'
+          );
+
+          if (mounted) setIsCreatorAllowed(isKL || isQA || isPN1);
         } else {
           if (mounted) setIsCreatorAllowed(false);
         }

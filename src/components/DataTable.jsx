@@ -20,8 +20,11 @@ import {
   isManager as checkIsManager,
   isHSE as checkIsHSE,
   canSubmitAjuan as checkCanSubmitAjuan,
-  canDeleteAjuan as checkCanDeleteAjuan
+  canDeleteAjuan as checkCanDeleteAjuan,
+  hasFieldVerificationAccess as checkHasFieldVerificationAccess,
+  getUserVerificationRoles
 } from "../constants/accessRights";
+import QuickFieldVerificationModal from "./QuickFieldVerificationModal";
 
 // Simple CSS icons as components
 const SearchIcon = () => (
@@ -97,6 +100,8 @@ const DataTable = ({
   const [approveModal, setApproveModal] = useState({ isOpen: false, itemId: null, loading: false });
   // Detail ajuan modal state
   const [detailModal, setDetailModal] = useState({ isOpen: false, itemId: null });
+  // Quick field verification modal state
+  const [verificationModal, setVerificationModal] = useState({ isOpen: false, item: null });
   
   const itemsPerPage = 8;
   const { user } = useAuth();
@@ -553,6 +558,9 @@ const DataTable = ({
   const canSubmitData = checkCanSubmitAjuan(user);
   const canDeleteData = checkCanDeleteAjuan(user);
 
+  // Field verification quick-access: user can open verification popup from list
+  const hasFieldVerifAccess = checkHasFieldVerificationAccess(user);
+
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Search and Filter Controls */}
@@ -741,6 +749,16 @@ const DataTable = ({
                       >
                         View
                       </button>
+                      {/* Quick Field Verification button – visible when step 3 and user has eligible roles for this request */}
+                      {hasFieldVerifAccess && item.status === 'InProgress' && item.currentStepLevel === 3 && getUserVerificationRoles(user, item.bagian).length > 0 && (
+                        <button
+                          className="px-3 py-1 text-xs bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 transition-colors"
+                          onClick={() => setVerificationModal({ isOpen: true, item })}
+                          title="Verifikasi Lapangan"
+                        >
+                          Verifikasi
+                        </button>
+                      )}
                       {renderActions(item, isSameDept)}
                     </div>
                   </td>
@@ -833,6 +851,17 @@ const DataTable = ({
           onNavigate={onNavigate}
         />
       )}
+      {/* Quick Field Verification Modal */}
+      <QuickFieldVerificationModal
+        isOpen={verificationModal.isOpen}
+        onClose={() => setVerificationModal({ isOpen: false, item: null })}
+        onComplete={() => {
+          setVerificationModal({ isOpen: false, item: null });
+          setRefreshKey(prev => prev + 1);
+          window.dispatchEvent(new Event('ajuanDataRefresh'));
+        }}
+        ajuanData={verificationModal.item}
+      />
     </div>
   );
 };

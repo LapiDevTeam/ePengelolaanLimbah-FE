@@ -603,6 +603,79 @@ export const getPembuatanBAPScope = (user) => {
 };
 
 // =============================================================================
+// FIELD VERIFICATION QUICK ACCESS (from DataTable list)
+// =============================================================================
+
+/**
+ * Check if the currently logged-in user has access to perform field verification
+ * at any of the 4 verification roles (step 3).
+ * 
+ * A user qualifies when their department + job level matches at least one role:
+ *   Role 1 – Pelaksana Pemohon   (pemohon dept, job level 7)
+ *   Role 2 – Supervisor Pemohon  (pemohon dept, job level 5 or 6)
+ *   Role 3 – Pelaksana HSE       (KL dept, job level 7)
+ *   Role 4 – Supervisor HSE      (KL dept, job level 5 or 6)
+ *
+ * Because the "pemohon dept" depends on the request itself, here we only check
+ * if the user's job level is 5, 6, or 7. The per-request filtering (does the
+ * user's dept match the request's bagian?) is done at render time.
+ *
+ * Used in: DataTable.jsx
+ *
+ * @param {object} user – User object from AuthContext
+ * @returns {boolean} True if user could potentially verify any request
+ */
+export const hasFieldVerificationAccess = (user) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) return false;
+
+  const jobLevel = normalizedUser.Job_LevelID;
+  if (jobLevel === null || jobLevel === undefined) return false;
+
+  // Only job levels 5, 6, 7 participate in field verification
+  return jobLevel === 5 || jobLevel === 6 || jobLevel === 7;
+};
+
+/**
+ * Determine which verification role IDs the logged-in user can approve
+ * for a specific permohonan (based on the request's bagian/department).
+ *
+ * AD1 and AD2 are treated as the same group for pemohon roles.
+ *
+ * @param {object} user – User from AuthContext (needs emp_DeptID, Job_LevelID)
+ * @param {string} permohonanBagian – The bagian (department) of the permohonan
+ * @returns {number[]} Array of eligible role IDs (1-4)
+ */
+export const getUserVerificationRoles = (user, permohonanBagian) => {
+  const normalizedUser = normalizeUser(user);
+  if (!normalizedUser) return [];
+
+  const jobLevel = normalizedUser.Job_LevelID;
+  if (jobLevel === null || jobLevel === undefined) return [];
+
+  const userDept = normalizedUser.emp_DeptID; // already uppercased
+  const reqDept = (permohonanBagian || '').toString().toUpperCase();
+
+  const isADGroup = (d) => d === 'AD1' || d === 'AD2';
+
+  const eligibleRoles = [];
+
+  // HSE (KL) roles
+  if (userDept === 'KL') {
+    if (jobLevel === 7) eligibleRoles.push(3); // Pelaksana HSE
+    if (jobLevel === 5 || jobLevel === 6) eligibleRoles.push(4); // Supervisor HSE
+  }
+
+  // Pemohon roles – user dept must match request's bagian
+  if (reqDept && (userDept === reqDept || (isADGroup(userDept) && isADGroup(reqDept)))) {
+    if (jobLevel === 7) eligibleRoles.push(1); // Pelaksana Pemohon
+    if (jobLevel === 5 || jobLevel === 6) eligibleRoles.push(2); // Supervisor Pemohon
+  }
+
+  return eligibleRoles;
+};
+
+// =============================================================================
 // ALL PERMOHONAN TAB PERMISSIONS
 // =============================================================================
 

@@ -14,7 +14,7 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
   // 1. Users with dept+jobLevel allowed for this group (central config in accessRights.js)
   //    - QA (ofc/spv/mgr): only for 'recall'
   //    - PN1 (ofc/spv/mgr): only for 'recall-precursor'
-  // 2. KL officers registered as Appr_No=1 (external approval API) — all groups
+  // 2. KL officers registered as Appr_No=1 or Appr_No=2 (external approval API) — all groups
   useEffect(() => {
     let mounted = true;
 
@@ -27,16 +27,20 @@ const BeritaAcara = ({ onNavigate, onPendingApprovalChange, pendingApprovalByGro
       return () => { mounted = false; };
     }
 
-    // Fallback: check KL officer via external approval API (all groups)
+    // Fallback: check KL officer/manager via external approval API (all groups)
     const checkCreator = async () => {
       setCreatorCheckLoading(true);
       try {
-        const res = await dataAPI.getExternalApprovalList(1);
+        const res = await dataAPI.getExternalApprovalList(null);
         if (res.data && res.data.success) {
           const items = res.data.data || [];
           const appItems = items.filter(i => String(i.Appr_ApplicationCode || '') === 'ePengelolaan_Limbah_Berita_Acara');
           const myNik = user && (user.log_NIK || user.emp_NIK || user.log_nik || user.NIK);
-          const allowed = appItems.some(it => String(it.Appr_DeptID || '').toUpperCase() === 'KL' && String(it.Appr_ID) === String(myNik));
+          const allowed = appItems.some(it =>
+            String(it.Appr_DeptID || '').toUpperCase() === 'KL' &&
+            String(it.Appr_ID) === String(myNik) &&
+            (Number(it.Appr_No) === 1 || Number(it.Appr_No) === 2)
+          );
           if (mounted) setIsCreatorAllowed(allowed);
         } else {
           if (mounted) setIsCreatorAllowed(false);

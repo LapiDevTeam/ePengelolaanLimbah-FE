@@ -77,9 +77,12 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     const fetchDepartments = async () => {
       setDepartmentsLoading(true);
       try {
-        const res = await dataAPI.getExternalApprovalList(1);
+        const res = await dataAPI.getExternalApprovalList(null);
         if (res.data.success) {
-          const items = res.data.data || [];
+          const items = (res.data.data || []).filter(i =>
+            String(i.Appr_ApplicationCode || '') === 'ePengelolaan_Limbah_Berita_Acara' &&
+            (Number(i.Appr_No) === 1 || Number(i.Appr_No) === 2)
+          );
           // Extract unique department IDs (including 'KL' since HSE can also be pemohon)
           const deptSet = new Set();
           items.forEach(item => {
@@ -130,16 +133,20 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
       return () => { mounted = false; };
     }
 
-    // Fallback: KL officer via external approval API
+    // Fallback: KL officer/manager via external approval API
     const checkCreator = async () => {
       setCreatorCheckLoading(true);
       try {
-        const res = await dataAPI.getExternalApprovalList(1);
+        const res = await dataAPI.getExternalApprovalList(null);
         if (res.data.success) {
           const items = res.data.data || [];
           const appItems = items.filter(i => String(i.Appr_ApplicationCode || '') === 'ePengelolaan_Limbah_Berita_Acara');
           const myNik = user && (user.log_NIK || user.emp_NIK || user.log_nik || user.NIK);
-          const allowed = appItems.some(it => String(it.Appr_DeptID || '').toUpperCase() === 'KL' && String(it.Appr_ID) === String(myNik));
+          const allowed = appItems.some(it =>
+            String(it.Appr_DeptID || '').toUpperCase() === 'KL' &&
+            String(it.Appr_ID) === String(myNik) &&
+            (Number(it.Appr_No) === 1 || Number(it.Appr_No) === 2)
+          );
           if (mounted) setIsCreatorAllowed(allowed);
         } else {
           if (mounted) setIsCreatorAllowed(false);

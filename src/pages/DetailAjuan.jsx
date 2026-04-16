@@ -7,7 +7,7 @@ import { TokenManager } from "../utils/tokenManager";
 import { useAuth } from "../contexts/AuthContext";
 import { useConfigContext } from "../contexts/ConfigContext";
 import DownloadLabelModal from "../components/DownloadLabelModal";
-import FieldVerificationModal from "../components/FieldVerificationModal";
+import QuickFieldVerificationModal from "../components/QuickFieldVerificationModal";
 
 const XIcon = () => (
   <div className="w-5 h-5 relative">
@@ -843,12 +843,11 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {}, asModal =
         requestId={applicationId || data?.id}
       />
 
-      <FieldVerificationModal
+      <QuickFieldVerificationModal
         isOpen={showFieldVerificationModal}
         onClose={() => setShowFieldVerificationModal(false)}
         onComplete={(verificationData) => {
           setShowFieldVerificationModal(false);
-          showSuccess(`Verifikasi lapangan selesai dengan status: ${verificationData.status}`);
           refreshData();
         }}
         ajuanData={{ 

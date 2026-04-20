@@ -161,7 +161,10 @@ export const dataAPI = {
               isPendingForCurrentUser: item.isPendingForCurrentUser || false,
               canCurrentUserApprove: item.canCurrentUserApprove || false,
               bap_status: item.bap_status || null,
-              berita_acara_id: item.berita_acara_id || null
+              berita_acara_id: item.berita_acara_id || null,
+              // Verification role info (only present when statusFilter=Verification)
+              verificationApprovedRoles: item.verificationApprovedRoles || null,
+              userVerificationRoles: item.userVerificationRoles || null
             })),
             pagination: response.data.pagination
           }

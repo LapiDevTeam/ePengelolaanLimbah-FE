@@ -622,6 +622,21 @@ const DataTable = ({
         )}
       </div>
 
+      {/* Verification color legend */}
+      {statusFilter === 'Verification' && (
+        <div className="px-6 py-2 bg-gray-50 border-b border-gray-200 flex items-center gap-4 text-xs text-gray-600">
+          <span className="font-medium">Keterangan warna:</span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-3 h-3 rounded bg-green-200 border border-green-400"></span>
+            Peran Anda sudah di-approve
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-3 h-3 rounded bg-yellow-200 border border-yellow-400"></span>
+            Sebagian peran Anda sudah di-approve
+          </span>
+        </div>
+      )}
+
       {/* Data Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -685,8 +700,64 @@ const DataTable = ({
                 const userDeptID = (currentUser?.emp_DeptID || user?.emp_DeptID || '').toString().trim().toUpperCase();
                 const isSameDept = itemBagian !== '' && userDeptID !== '' && itemBagian === userDeptID;
                 
+                // Determine verification row color when in verification context
+                // - Green: user's role(s) have all been approved (by self or others)
+                // - Yellow: some of user's roles approved, some still pending
+                // - Default: none of user's roles approved yet, or user has no eligible roles
+                let verifRowClass = '';
+                let verifTooltip = '';
+                if (statusFilter === 'Verification' && item.verificationApprovedRoles) {
+                  const approvedRoles = item.verificationApprovedRoles;
+                  const userRoles = item.userVerificationRoles || [];
+                  
+                  if (userRoles.length > 0) {
+                    // User has known eligible roles from BE - use precise matching
+                    const userRolesApproved = userRoles.filter(r => approvedRoles.includes(r));
+                    if (userRolesApproved.length === userRoles.length) {
+                      verifRowClass = 'bg-green-50 border-l-4 border-l-green-400';
+                      verifTooltip = 'Peran verifikasi Anda sudah ter-approve';
+                    } else if (userRolesApproved.length > 0) {
+                      verifRowClass = 'bg-yellow-50 border-l-4 border-l-yellow-400';
+                      verifTooltip = 'Sebagian peran verifikasi Anda sudah ter-approve';
+                    }
+                  } else if (item.canCurrentUserApprove && !item.isPendingForCurrentUser) {
+                    // User can approve this step but it's NOT pending for them
+                    // → they have already processed/approved their role
+                    verifRowClass = 'bg-green-50 border-l-4 border-l-green-400';
+                    verifTooltip = 'Anda sudah melakukan approve pada ajuan ini';
+                  } else if (item.canCurrentUserApprove) {
+                    // User can approve and it's still pending - try client-side role detection
+                    const uDept = (currentUser?.emp_DeptID || user?.emp_DeptID || '').toString().toUpperCase();
+                    const uJobLevel = parseInt(currentUser?.Job_LevelID || user?.Job_LevelID || 0);
+                    const pemohonDept = itemBagian;
+                    const isADGroup = (d) => d === 'AD1' || d === 'AD2';
+                    const isPemohon = pemohonDept && (uDept === pemohonDept || (isADGroup(uDept) && isADGroup(pemohonDept)));
+                    const fallbackRoles = [];
+                    
+                    if (uDept === 'KL') {
+                      if (uJobLevel === 7) fallbackRoles.push(3);
+                      if (uJobLevel === 5 || uJobLevel === 6) fallbackRoles.push(4);
+                    }
+                    if (isPemohon) {
+                      if (uJobLevel === 7) fallbackRoles.push(1);
+                      if (uJobLevel === 5 || uJobLevel === 6) fallbackRoles.push(2);
+                    }
+                    
+                    if (fallbackRoles.length > 0) {
+                      const fbApproved = fallbackRoles.filter(r => approvedRoles.includes(r));
+                      if (fbApproved.length === fallbackRoles.length) {
+                        verifRowClass = 'bg-green-50 border-l-4 border-l-green-400';
+                        verifTooltip = 'Peran verifikasi Anda sudah ter-approve';
+                      } else if (fbApproved.length > 0) {
+                        verifRowClass = 'bg-yellow-50 border-l-4 border-l-yellow-400';
+                        verifTooltip = 'Sebagian peran verifikasi Anda sudah ter-approve';
+                      }
+                    }
+                  }
+                }
+                
                 return (
-                <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item.id} className={verifRowClass || 'hover:bg-gray-50'} title={verifTooltip}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTimestamp(item.tanggal)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[11rem]">
                     <div className="truncate" title={item.noPermohonan || '-'}>{item.noPermohonan || '-'}</div>
@@ -708,6 +779,14 @@ const DataTable = ({
                     >
                       {getStatusDisplayName(item.status, item.currentStepLevel)}
                     </span>
+                    {statusFilter === 'Verification' && item.verificationApprovedRoles && (
+                      <span
+                        className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700"
+                        title={`Role ter-approve: ${item.verificationApprovedRoles.length}/4`}
+                      >
+                        {item.verificationApprovedRoles.length}/4
+                      </span>
+                    )}
                     {viewMode === 'my-requests' && item.status === 'Completed' && item.bap_status && item.bap_status !== 'Completed' && (
                       <button
                         className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors cursor-pointer"

@@ -50,7 +50,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   };
 
   const [form, setForm] = useState({
-    bagian: "", // Single department (string) - one BAP must belong to exactly one bagian
+    bagian: "", // single department for all groups (precursor still uses date range)
     startDate: getLocalDateISO(), // Start of date range in YYYY-MM-DD format
     endDate: getLocalDateISO(), // End of date range in YYYY-MM-DD format
     jam: getLocalTimeHHMMSS(), // Current local time in HH:MM:SS format
@@ -65,58 +65,13 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   const [daftarPemusnahan, setDaftarPemusnahan] = useState([]);
   const [daftarGenerated, setDaftarGenerated] = useState(false);
   const [selectedRequestIds, setSelectedRequestIds] = useState([]);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatorAllowed, setIsCreatorAllowed] = useState(false);
   const [creatorCheckLoading, setCreatorCheckLoading] = useState(true);
-  const [availableDepartments, setAvailableDepartments] = useState([]);
-  const [departmentsLoading, setDepartmentsLoading] = useState(true);
-
-  // Fetch available departments from API
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      setDepartmentsLoading(true);
-      try {
-        const res = await dataAPI.getExternalApprovalList(null);
-        if (res.data.success) {
-          const items = (res.data.data || []).filter(i =>
-            String(i.Appr_ApplicationCode || '') === 'ePengelolaan_Limbah_Berita_Acara' &&
-            (Number(i.Appr_No) === 1 || Number(i.Appr_No) === 2 || Number(i.Appr_No) === 3)
-          );
-          // Extract unique department IDs (including 'KL' since HSE can also be pemohon)
-          const deptSet = new Set();
-          items.forEach(item => {
-            const deptId = item.Appr_DeptID;
-            if (deptId) {
-              deptSet.add(String(deptId).toUpperCase());
-            }
-          });
-          const sortedDepts = Array.from(deptSet).sort();
-          setAvailableDepartments(sortedDepts);
-        }
-      } catch (err) {
-        console.error('Error fetching departments:', err);
-        setAvailableDepartments([]);
-      } finally {
-        setDepartmentsLoading(false);
-      }
-    };
-
-    fetchDepartments();
-  }, []);
-
-  // Update bagian when user changes
-  useEffect(() => {
-    if (user?.emp_DeptID) {
-      // Use the department ID directly from user data
-      const deptId = String(user.emp_DeptID).toUpperCase();
-      
-      setForm(prev => ({
-        ...prev,
-        bagian: deptId // Single string, not array
-      }));
-    }
-  }, [user]);
+  // allDataForDate: all available requests fetched for the current date selection (no bagian filter)
+  // Used to derive available departments and to generate daftar by client-side filtering
+  const [allDataForDate, setAllDataForDate] = useState([]);
+  const [loadingDataForDate, setLoadingDataForDate] = useState(false);
 
   // Check if current user is allowed to create Berita Acara via external approval API:
   //   - KL (Appr_No 1 or 2) → all groups
@@ -164,28 +119,64 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     return () => { mounted = false; };
   }, [user, group]);
 
-  // Reset daftar pemusnahan when bagian or date range changes
+  // When date selection changes, fetch all available requests for that date (no bagian filter)
+  // and derive which departments have data. Reset bagian selection and daftar.
+  useEffect(() => {
+    if (!form.startDate) {
+      setAllDataForDate([]);
+      return;
+    }
+    const isPrecursor = group === 'recall-precursor';
+    const effectiveEnd = isPrecursor ? (form.endDate || form.startDate) : form.startDate;
+
+    if (isPrecursor && form.endDate && new Date(form.startDate) > new Date(form.endDate)) {
+      // Invalid range — don't fetch
+      setAllDataForDate([]);
+      return;
+    }
+
+    setLoadingDataForDate(true);
+    setAllDataForDate([]);
+    setDaftarGenerated(false);
+    setDaftarPemusnahan([]);
+    setForm(prev => ({ ...prev, bagian: "" }));
+
+    dataAPI.getAvailableRequestsForDailyLog({
+      startDate: form.startDate,
+      endDate: effectiveEnd,
+      group: group || undefined
+    }).then(res => {
+      if (res.data.success) {
+        setAllDataForDate(res.data.data || []);
+      } else {
+        setAllDataForDate([]);
+      }
+    }).catch(() => {
+      setAllDataForDate([]);
+    }).finally(() => {
+      setLoadingDataForDate(false);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.startDate, form.endDate]);
+
+  // Reset daftar pemusnahan when bagian changes
   useEffect(() => {
     if (daftarGenerated) {
       setDaftarGenerated(false);
       setDaftarPemusnahan([]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.bagian, form.startDate, form.endDate]);
+  }, [form.bagian]);
 
   // Add beforeunload event listener to warn about unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-      const userDeptId = user?.emp_DeptID ? String(user.emp_DeptID).toUpperCase() : '';
-      const hasFormData = Object.entries(form).some(([key, value]) => {
-        if (key === 'bagian') {
-          // Check if bagian differs from default (user's department)
-          return typeof value === 'string' && value !== '' && value !== userDeptId;
-        }
-        return typeof value === 'string' && value.trim() !== '' && value !== userDeptId;
+      const formHasData = Object.entries(form).some(([key, value]) => {
+        if (key === 'bagian') return typeof value === 'string' && value !== '';
+        return typeof value === 'string' && value.trim() !== '';
       });
       
-      if (hasFormData || daftarPemusnahan.length > 0) {
+      if (formHasData || daftarPemusnahan.length > 0) {
         const message = "Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?";
         event.preventDefault();
         event.returnValue = message;
@@ -213,14 +204,14 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
     setForm({ ...form, [name]: value });
   };
 
-  const fetchDaftarPemusnahan = async () => {
-    // Business Rule: One BAP must belong to exactly one bagian
-    if (!form.bagian || !form.startDate) {
-      showWarning("Bagian dan tanggal verifikasi lapangan harus diisi terlebih dahulu");
+  const fetchDaftarPemusnahan = () => {
+    // Validate dates first
+    if (!form.startDate) {
+      showWarning("Tanggal verifikasi lapangan harus diisi terlebih dahulu");
       return;
     }
     if (isPrecursorGroup && !form.endDate) {
-      showWarning("Bagian dan periode selesai verifikasi lapangan harus diisi terlebih dahulu");
+      showWarning("Periode selesai verifikasi lapangan harus diisi terlebih dahulu");
       return;
     }
     if (isPrecursorGroup && new Date(form.startDate) > new Date(form.endDate)) {
@@ -228,45 +219,36 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
       return;
     }
 
-    // In single-date mode send the same date as both start and end
-    const effectiveEndDate = isPrecursorGroup ? form.endDate : form.startDate;
+    // Validate bagian
+    const hasBagian = typeof form.bagian === 'string' && form.bagian.trim() !== '';
+    if (!hasBagian) {
+      showWarning("Bagian harus dipilih terlebih dahulu");
+      return;
+    }
 
-    setIsGenerating(true);
-    try {
-      // Request server to return only requests for this single bagian, date range, and group
-      const response = await dataAPI.getAvailableRequestsForDailyLog({ 
-        bagian: form.bagian, // Single string, not array
-        startDate: form.startDate,
-        endDate: effectiveEndDate,
-        group: group || undefined
-      });
+    if (loadingDataForDate) {
+      showInfo("Sedang memuat data untuk tanggal yang dipilih, mohon tunggu...");
+      return;
+    }
 
-      if (response.data.success) {
-        setDaftarPemusnahan(response.data.data || []);
-        setDaftarGenerated(true);
+    // Filter allDataForDate by selected bagian (client-side, no extra API call)
+    const filtered = allDataForDate.filter(r => r.bagian === form.bagian);
 
-        if ((response.data.data || []).length === 0) {
-          showInfo(`Tidak ada permohonan yang selesai diverifikasi untuk bagian ${form.bagian} pada ${isPrecursorGroup ? `periode ${form.startDate} s/d ${form.endDate}` : `tanggal ${form.startDate}`}`);
-        }
-      } else {
-        setDaftarPemusnahan([]);
-        setDaftarGenerated(false);
-        showError("Error: " + (response.data.message || "Failed to fetch available requests"));
-      }
-      
-    } catch (error) {
-      console.error('Error fetching daftar pemusnahan:', error);
-      setDaftarPemusnahan([]);
-      setDaftarGenerated(false);
-      showError("Terjadi kesalahan saat mengambil data pemusnahan");
-    } finally {
-      setIsGenerating(false);
+    setDaftarPemusnahan(filtered);
+    setDaftarGenerated(true);
+
+    if (filtered.length === 0) {
+      const dateMsg = isPrecursorGroup
+        ? `periode ${form.startDate} s/d ${form.endDate}`
+        : `tanggal ${form.startDate}`;
+      const bagianMsg = form.bagian;
+      showInfo(`Tidak ada permohonan yang selesai diverifikasi untuk bagian ${bagianMsg} pada ${dateMsg}`);
     }
   };
 
   const resetForm = () => {
     setForm({
-      bagian: "", // Single department string
+      bagian: "",
       startDate: getLocalDateISO(),
       endDate: getLocalDateISO(),
       jam: getLocalTimeHHMMSS(),
@@ -276,20 +258,20 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
       pelaksanaHSE: "",
       supervisorHSE: ""
     });
+    setAllDataForDate([]);
     setDaftarPemusnahan([]);
     setDaftarGenerated(false);
   };
 
+  const hasFormData = () => {
+    return Object.entries(form).some(([key, value]) => {
+      if (key === 'bagian') return typeof value === 'string' && value !== '';
+      return typeof value === 'string' && value.trim() !== '';
+    }) || daftarPemusnahan.length > 0;
+  };
+
   const handleCancel = async () => {
-    const userDeptId = user?.emp_DeptID ? String(user.emp_DeptID).toUpperCase() : '';
-    const hasFormData = Object.entries(form).some(([key, value]) => {
-      if (key === 'bagian') {
-        return typeof value === 'string' && value !== '' && value !== userDeptId;
-      }
-      return typeof value === 'string' && value.trim() !== '' && value !== userDeptId;
-    });
-    
-    if (hasFormData || daftarPemusnahan.length > 0) {
+    if (hasFormData()) {
       const result = await showConfirmation(
         "Apakah Anda yakin ingin membatalkan? Semua data yang belum disimpan akan hilang.",
         "Konfirmasi Batal"
@@ -308,15 +290,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   };
 
   const handleKembali = async () => {
-    const userDeptId = user?.emp_DeptID ? String(user.emp_DeptID).toUpperCase() : '';
-    const hasFormData = Object.entries(form).some(([key, value]) => {
-      if (key === 'bagian') {
-        return typeof value === 'string' && value !== '' && value !== userDeptId;
-      }
-      return typeof value === 'string' && value.trim() !== '' && value !== userDeptId;
-    });
-    
-    if (hasFormData || daftarPemusnahan.length > 0) {
+    if (hasFormData()) {
       const result = await showConfirmation(
         "Apakah Anda yakin ingin kembali? Semua data yang belum disimpan akan hilang.",
         "Konfirmasi Kembali"
@@ -337,8 +311,8 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   const validateFormData = () => {
     const errors = [];
 
-    // Business Rule: One BAP must belong to exactly one bagian
-    if (!form.bagian || typeof form.bagian !== 'string' || form.bagian.trim() === '') {
+    const bagianValid = typeof form.bagian === 'string' && form.bagian.trim() !== '';
+    if (!bagianValid) {
       errors.push("Bagian harus diisi");
     }
     if (!form.startDate) {
@@ -443,6 +417,12 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
   // Role-based permission (using centralized accessRights)
   const isPemohon = checkIsPemohon(user);
 
+  // Derive available departments from fetched data for the selected date range
+  const availableDepartmentsForDate = [...new Set(allDataForDate.map(r => r.bagian).filter(Boolean))].sort();
+
+  // Whether a bagian has been selected (handles both string and array)
+  const hasBagianSelected = typeof form.bagian === 'string' && form.bagian.trim() !== '';
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -470,24 +450,8 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-6">
           <form className="space-y-4">
+            {/* Row 1: Tanggal first, then Jam and Lokasi */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bagian</label>
-                {/* Business Rule: One BAP must belong to exactly one bagian */}
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
-                  name="bagian"
-                  value={form.bagian}
-                  onChange={handleFormChange}
-                  disabled={departmentsLoading}
-                >
-                  <option value="">-- Pilih Bagian --</option>
-                  {availableDepartments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-gray-500">Satu BAP hanya untuk satu bagian</p>
-              </div>
               {isPrecursorGroup ? (
                 <>
                   <div>
@@ -503,7 +467,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
                         title="Tanggal awal periode selesai verifikasi lapangan"
                       />
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">Data ditampilkan berdasarkan tanggal selesai verifikasi lapangan</p>
+                    <p className="mt-1 text-xs text-gray-500">Data berdasarkan tanggal selesai verifikasi lapangan</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>
@@ -531,7 +495,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
                     onChange={handleFormChange}
                     title="Tanggal selesai verifikasi lapangan"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Data ditampilkan berdasarkan tanggal selesai verifikasi lapangan</p>
+                  <p className="mt-1 text-xs text-gray-500">Data berdasarkan tanggal selesai verifikasi lapangan</p>
                 </div>
               )}
               <div>
@@ -556,6 +520,52 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
                   <option value="Lapi kav.16,18">Lapi Kav. 16,18</option>
                   <option value="Lapi kav. 22,24">Lapi Kav. 22,24</option>
                 </select>
+              </div>
+              {!isPrecursorGroup && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Bagian</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white disabled:bg-gray-50 disabled:text-gray-500"
+                    name="bagian"
+                    value={form.bagian}
+                    onChange={handleFormChange}
+                    disabled={!form.startDate || loadingDataForDate}
+                  >
+                    <option value="">
+                      {!form.startDate ? '-- Pilih tanggal dulu --' : loadingDataForDate ? 'Memuat...' : availableDepartmentsForDate.length === 0 ? '-- Tidak ada data --' : '-- Pilih Bagian --'}
+                    </option>
+                    {availableDepartmentsForDate.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {loadingDataForDate ? 'Memuat bagian yang tersedia...' : form.startDate && availableDepartmentsForDate.length === 0 ? 'Tidak ada data untuk tanggal ini' : 'Satu BAP hanya untuk satu bagian'}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Row 2: Bagian single select for all groups */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bagian</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white disabled:bg-gray-50 disabled:text-gray-500"
+                  name="bagian"
+                  value={form.bagian}
+                  onChange={handleFormChange}
+                  disabled={!form.startDate || loadingDataForDate}
+                >
+                  <option value="">
+                    {!form.startDate ? '-- Pilih tanggal dulu --' : loadingDataForDate ? 'Memuat...' : availableDepartmentsForDate.length === 0 ? '-- Tidak ada data --' : '-- Pilih Bagian --'}
+                  </option>
+                  {availableDepartmentsForDate.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  {loadingDataForDate ? 'Memuat bagian yang tersedia...' : form.startDate && availableDepartmentsForDate.length === 0 ? 'Tidak ada data untuk tanggal/periode ini' : 'Satu BAP hanya untuk satu bagian'}
+                </p>
               </div>
             </div>
 
@@ -629,21 +639,23 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
                     <button
                       type="button"
                       onClick={fetchDaftarPemusnahan}
-                      disabled={!form.bagian || !form.startDate || !form.endDate || isGenerating}
+                      disabled={!hasBagianSelected || !form.startDate || loadingDataForDate}
                       className="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isGenerating ? (
+                      {loadingDataForDate ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Generating...
+                          Memuat data...
                         </>
                       ) : (
                         "Generate Daftar Pemusnahan"
                       )}
                     </button>
-                    {(!form.bagian || !form.startDate || !form.endDate) && (
+                    {(!form.startDate || !hasBagianSelected) && (
                       <p className="mt-2 text-sm text-gray-500">
-                        Pilih bagian dan periode selesai verifikasi lapangan terlebih dahulu untuk generate daftar pemusnahan.
+                        {!form.startDate
+                          ? 'Pilih tanggal verifikasi lapangan terlebih dahulu.'
+                          : 'Pilih bagian terlebih dahulu untuk generate daftar pemusnahan.'}
                       </p>
                     )}
                   </div>

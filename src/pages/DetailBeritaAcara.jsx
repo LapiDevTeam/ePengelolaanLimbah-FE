@@ -104,8 +104,13 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
         const requests = beritaAcaraData.PermohonanPemusnahanLimbahs || [];
         const firstReq = requests[0];
 
-        // Build daftar pemusnahan
-        const daftar = requests.map((req) => {
+        // Build daftar pemusnahan — sorted by first 5 digits of nomor_permohonan
+        const sortedRequests = [...requests].sort((a, b) => {
+          const numA = parseInt((a.nomor_permohonan || '').substring(0, 5)) || 0;
+          const numB = parseInt((b.nomor_permohonan || '').substring(0, 5)) || 0;
+          return numA - numB;
+        });
+        const daftar = sortedRequests.map((req) => {
           const details = req.DetailLimbahs || [];
           const jumlahItem =
             req.jumlah_item || (details.reduce ? details.reduce((s, d) => s + (d.jumlah_item || 0), 0) : 0);

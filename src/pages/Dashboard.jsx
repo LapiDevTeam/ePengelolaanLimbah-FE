@@ -49,6 +49,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
     pembuatanBAP: 0,
     rejectedKL: 0
   })
+  const [rejectedKLDaysWindow, setRejectedKLDaysWindow] = useState(7)
   const [isLoadingStats, setIsLoadingStats] = useState(true)
   const [statsByGroup, setStatsByGroup] = useState({
     myRequests: { 'limbah-b3': 0, 'recall': 0, 'recall-precursor': 0 },
@@ -89,6 +90,7 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
             pembuatanBAP: backendStats.pembuatanBAP || 0,
             rejectedKL: backendStats.rejectedKL || 0
           })
+          setRejectedKLDaysWindow(backendStats.rejectedKLDaysWindow || 30)
           
           // Extract group breakdowns from backend response
           const myRequestsByGroup = typeof backendStats.myRequests === 'object' 
@@ -610,7 +612,10 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="mb-2">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Rejected (KL)</h3>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900">Rejected (KL)</h3>
+                  <span className="text-xs text-gray-400">{rejectedKLDaysWindow} hari terakhir</span>
+                </div>
                 {isLoadingStats ? (
                   <div className="flex items-center justify-center h-12">
                     <svg className="animate-spin h-8 w-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

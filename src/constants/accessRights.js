@@ -356,13 +356,13 @@ export const isPJKPO = (user) => {
  */
 export const canShowApprovalActions = (user, data, fromApprovedTab = false) => {
   if (!user || !data) return false;
-  
+
   // Already viewed from approved tab - no actions
   if (fromApprovedTab) return false;
-  
+
   // Not in progress - no actions
   if (data.status !== 'InProgress') return false;
-  
+
   // Already processed by current user - no actions
   if (data.processedByCurrentUser) return false;
 
@@ -370,7 +370,7 @@ export const canShowApprovalActions = (user, data, fromApprovedTab = false) => {
   if (isManager(user) || isHSE(user)) {
     return true;
   }
-  
+
   // PJKPO can approve produk pangan at APJ step (level 2)
   if (isPJKPO(user) && data.isProdukPangan === true && data.currentStepLevel === 2) {
     return true;
@@ -474,12 +474,12 @@ export const GOLONGAN_GROUPS = {
  */
 export const canSeeVerifikasiLapanganCard = (user) => {
   if (!user) return false;
-  
+
   // Approvers don't see this card - they have Pending Approval
   if (hasDaftarAjuanApprovalAuthority(user)) {
     return false;
   }
-  
+
   return true;
 };
 
@@ -498,18 +498,18 @@ export const getVerifikasiLapanganScope = (user) => {
 
   // KL users can see all data (only KL, not approvers)
   if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
-    return { 
-      scope: 'all', 
-      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
-      filterByBagian: false 
+    return {
+      scope: 'all',
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR],
+      filterByBagian: false
     };
   }
 
   // QA users can see their own bagian data + all 'recall' group data
   if (normalizedUser.emp_DeptID === QA_DEPARTMENT_ID) {
-    return { 
-      scope: 'bagian_plus_group', 
-      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+    return {
+      scope: 'bagian_plus_group',
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR],
       filterByBagian: true,
       additionalGroups: [GOLONGAN_GROUPS.RECALL]
     };
@@ -517,19 +517,19 @@ export const getVerifikasiLapanganScope = (user) => {
 
   // PN1 users can see their own bagian data + all 'recall-precursor' group data
   if (normalizedUser.emp_DeptID === PN1_DEPARTMENT_ID) {
-    return { 
-      scope: 'bagian_plus_group', 
-      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+    return {
+      scope: 'bagian_plus_group',
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR],
       filterByBagian: true,
       additionalGroups: [GOLONGAN_GROUPS.RECALL_PRECURSOR]
     };
   }
 
   // Regular users can only see data from their own department (bagian)
-  return { 
-    scope: 'own', 
-    allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
-    filterByBagian: true 
+  return {
+    scope: 'own',
+    allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR],
+    filterByBagian: true
   };
 };
 
@@ -543,12 +543,12 @@ export const getVerifikasiLapanganScope = (user) => {
  */
 export const canSeePembuatanBAPCard = (user) => {
   if (!user) return false;
-  
+
   // Approvers don't see this card - they have Pending Approval
   if (hasDaftarAjuanApprovalAuthority(user)) {
     return false;
   }
-  
+
   return true;
 };
 
@@ -567,18 +567,18 @@ export const getPembuatanBAPScope = (user) => {
 
   // KL users can see all data (only KL, not approvers)
   if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
-    return { 
-      scope: 'all', 
-      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
-      filterByBagian: false 
+    return {
+      scope: 'all',
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR],
+      filterByBagian: false
     };
   }
 
   // QA users can see their own bagian data + all 'recall' group data
   if (normalizedUser.emp_DeptID === QA_DEPARTMENT_ID) {
-    return { 
-      scope: 'bagian_plus_group', 
-      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+    return {
+      scope: 'bagian_plus_group',
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR],
       filterByBagian: true,
       additionalGroups: [GOLONGAN_GROUPS.RECALL]
     };
@@ -586,19 +586,19 @@ export const getPembuatanBAPScope = (user) => {
 
   // PN1 users can see their own bagian data + all 'recall-precursor' group data
   if (normalizedUser.emp_DeptID === PN1_DEPARTMENT_ID) {
-    return { 
-      scope: 'bagian_plus_group', 
-      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
+    return {
+      scope: 'bagian_plus_group',
+      allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR],
       filterByBagian: true,
       additionalGroups: [GOLONGAN_GROUPS.RECALL_PRECURSOR]
     };
   }
 
   // Regular users can only see data from their own department (bagian)
-  return { 
-    scope: 'own', 
-    allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR], 
-    filterByBagian: true 
+  return {
+    scope: 'own',
+    allowedGroups: [GOLONGAN_GROUPS.LIMBAH_B3, GOLONGAN_GROUPS.RECALL, GOLONGAN_GROUPS.RECALL_PRECURSOR],
+    filterByBagian: true
   };
 };
 
@@ -632,8 +632,8 @@ export const hasFieldVerificationAccess = (user) => {
   const jobLevel = normalizedUser.Job_LevelID;
   if (jobLevel === null || jobLevel === undefined) return false;
 
-  // Only job levels 5, 6, 7 participate in field verification
-  return jobLevel === 5 || jobLevel === 6 || jobLevel === 7;
+  // Only job levels 4, 5, 6, 7 participate in field verification
+  return jobLevel === 4 || jobLevel === 5 || jobLevel === 6 || jobLevel === 7;
 };
 
 /**
@@ -669,7 +669,7 @@ export const getUserVerificationRoles = (user, permohonanBagian) => {
   // Pemohon roles – user dept must match request's bagian
   if (reqDept && (userDept === reqDept || (isADGroup(userDept) && isADGroup(reqDept)))) {
     if (jobLevel === 7) eligibleRoles.push(1); // Pelaksana Pemohon
-    if (jobLevel === 5 || jobLevel === 6) eligibleRoles.push(2); // Supervisor Pemohon
+    if (jobLevel === 4 || jobLevel === 5 || jobLevel === 6) eligibleRoles.push(2); // Supervisor/AM Pemohon
   }
 
   return eligibleRoles;
@@ -691,17 +691,17 @@ export const getUserVerificationRoles = (user, permohonanBagian) => {
  */
 export const canSeeAllPermohonanTab = (user) => {
   if (!user) return false;
-  
+
   // KL users always see this tab (All Permohonan)
   if (isFromKLDepartment(user)) {
     return true;
   }
-  
+
   // Approvers don't see this tab - they have Pending Approval
   if (hasDaftarAjuanApprovalAuthority(user)) {
     return false;
   }
-  
+
   // All other users see this tab (Verifikasi & Pembuatan BAP)
   return true;
 };
@@ -718,12 +718,12 @@ export const canSeeAllPermohonanTab = (user) => {
 export const getAllPermohonanAllowedStatuses = (user) => {
   const normalizedUser = normalizeUser(user);
   if (!normalizedUser) return [];
-  
+
   // KL users can see all statuses
   if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
     return null; // null means all statuses
   }
-  
+
   // Non-KL users can only see Verification and Pembuatan BAP
   return ['Verification', 'Pembuatan BAP'];
 };
@@ -743,8 +743,8 @@ export const getAllPermohonanScope = (user) => {
 
   // KL users can see all data and all statuses
   if (normalizedUser.emp_DeptID === KL_DEPARTMENT_ID) {
-    return { 
-      scope: 'all', 
+    return {
+      scope: 'all',
       filterByBagian: false,
       additionalGroups: [],
       allowedStatuses: null // null = all statuses
@@ -754,8 +754,8 @@ export const getAllPermohonanScope = (user) => {
   // QA users can see their own bagian data + all 'recall' group data
   // But only for Verification and Pembuatan BAP statuses
   if (normalizedUser.emp_DeptID === QA_DEPARTMENT_ID) {
-    return { 
-      scope: 'bagian_plus_group', 
+    return {
+      scope: 'bagian_plus_group',
       filterByBagian: true,
       additionalGroups: [GOLONGAN_GROUPS.RECALL],
       allowedStatuses: ['Verification', 'Pembuatan BAP']
@@ -765,8 +765,8 @@ export const getAllPermohonanScope = (user) => {
   // PN1 users can see their own bagian data + all 'recall-precursor' group data
   // But only for Verification and Pembuatan BAP statuses
   if (normalizedUser.emp_DeptID === PN1_DEPARTMENT_ID) {
-    return { 
-      scope: 'bagian_plus_group', 
+    return {
+      scope: 'bagian_plus_group',
       filterByBagian: true,
       additionalGroups: [GOLONGAN_GROUPS.RECALL_PRECURSOR],
       allowedStatuses: ['Verification', 'Pembuatan BAP']
@@ -775,8 +775,8 @@ export const getAllPermohonanScope = (user) => {
 
   // Regular users can only see data from their own department (bagian)
   // But only for Verification and Pembuatan BAP statuses
-  return { 
-    scope: 'own', 
+  return {
+    scope: 'own',
     filterByBagian: true,
     additionalGroups: [],
     allowedStatuses: ['Verification', 'Pembuatan BAP']
@@ -798,16 +798,16 @@ export const getUserPermissions = (user) => {
   return {
     // Daftar Ajuan permissions
     hasDaftarAjuanApprovalAuthority: hasDaftarAjuanApprovalAuthority(user),
-    
+
     // Berita Acara permissions
     hasBeritaAcaraApprovalAuthority: hasBeritaAcaraApprovalAuthority(user),
-    
+
     // Department-based
     isFromKLDepartment: isFromKLDepartment(user),
     isFromQADepartment: isFromQADepartment(user),
     isFromPN1Department: isFromPN1Department(user),
     isHSEManager: isHSEManager(user),
-    
+
     // Role-based
     isPemohon: isPemohon(user),
     isManager: isManager(user),
@@ -816,14 +816,14 @@ export const getUserPermissions = (user) => {
     isQA: isQA(user),
     isPL: isPL(user),
     isPJKPO: isPJKPO(user),
-    
+
     // Combined
     canCreateAjuan: canCreateAjuan(user),
     canSubmitAjuan: canSubmitAjuan(user),
     canDeleteAjuan: canDeleteAjuan(user),
     canCreateBeritaAcaraByDeptLevel: (group) => canCreateBeritaAcaraByDeptLevel(user, group),
     shouldShowDaftarAjuanTabs: shouldShowDaftarAjuanTabs(user),
-    
+
     // Verifikasi Lapangan & Pembuatan BAP
     canSeeVerifikasiLapanganCard: canSeeVerifikasiLapanganCard(user),
     verifikasiLapanganScope: getVerifikasiLapanganScope(user),

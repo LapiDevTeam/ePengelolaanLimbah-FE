@@ -88,7 +88,7 @@ const QuickFieldVerificationModal = ({ isOpen, onClose, onComplete, ajuanData })
     }
     if (reqDept && (dept === reqDept || (isADGroup(dept) && isADGroup(reqDept)))) {
       if (jl === 7) roles.push(1);
-      if (jl === 5 || jl === 6) roles.push(2);
+      if (jl === 4 || jl === 5 || jl === 6) roles.push(2);
     }
     return roles;
   }, []);

@@ -79,7 +79,8 @@ export const dataAPI = {
         // Dept. Requests tab: show all requests from user's department
         deptOnly = false,
         userDept = '',
-        sortOrder = 'desc'
+        sortOrder = 'desc',
+        excludeRejected = false
       } = params;
       
       // Build query params
@@ -134,6 +135,10 @@ export const dataAPI = {
 
       if (sortOrder) {
         queryParams.append('sortOrder', sortOrder);
+      }
+
+      if (excludeRejected) {
+        queryParams.append('excludeRejected', 'true');
       }
 
       const response = await api.get(`/permohonan?${queryParams}`);

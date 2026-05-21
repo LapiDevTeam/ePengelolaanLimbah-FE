@@ -238,6 +238,7 @@ const DataTable = ({
             deptOnly: !!deptId,
             userDept: deptId,
             excludeCompleted: false,
+            excludeRejected: true,
             group: groupFilter,
             sortOrder: sortOrder
           });

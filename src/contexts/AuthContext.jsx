@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { API_BASE_URL } from "../api/auth";
 import { dataAPI } from "../services/api";
+import { HSE_MANAGER_JABATAN } from "../constants/accessRights";
 
 const AuthContext = createContext(null);
+const HSE_MANAGER_JABATAN_NORMALIZED = HSE_MANAGER_JABATAN.toLowerCase();
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // Changed from boolean to null for loading state
@@ -22,11 +24,11 @@ export const AuthProvider = ({ children }) => {
 
         // Role mapping logic based on job title
         if (result.data.data.user.Jabatan) {
-          const jabatan = result.data.data.user.Jabatan.toLowerCase();
-          if (jabatan.includes("manager") || jabatan.includes("mgr")) {
-            userRole = "Manager";
-          } else if (jabatan.includes("hse") || jabatan.includes("safety")) {
+          const jabatan = result.data.data.user.Jabatan.toLowerCase().trim();
+          if (jabatan === HSE_MANAGER_JABATAN_NORMALIZED) {
             userRole = "HSE";
+          } else if (jabatan.includes("manager") || jabatan.includes("mgr")) {
+            userRole = "Manager";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
           } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
@@ -111,11 +113,11 @@ export const AuthProvider = ({ children }) => {
 
         // Map job titles to roles
         if (userData.Jabatan) {
-          const jabatan = userData.Jabatan.toLowerCase();
-          if (jabatan.includes("mgr") || jabatan.includes("manager")) {
-            userRole = "Manager";
-          } else if (jabatan.includes("hse") || jabatan.includes("safety")) {
+          const jabatan = userData.Jabatan.toLowerCase().trim();
+          if (jabatan === HSE_MANAGER_JABATAN_NORMALIZED) {
             userRole = "HSE";
+          } else if (jabatan.includes("mgr") || jabatan.includes("manager")) {
+            userRole = "Manager";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
           } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
@@ -222,11 +224,11 @@ export const AuthProvider = ({ children }) => {
 
         // Map job titles to roles
         if (data.user.Jabatan) {
-          const jabatan = data.user.Jabatan.toLowerCase();
-          if (jabatan.includes("manager") || jabatan.includes("mgr")) {
-            userRole = "Manager";
-          } else if (jabatan.includes("hse") || jabatan.includes("safety")) {
+          const jabatan = data.user.Jabatan.toLowerCase().trim();
+          if (jabatan === HSE_MANAGER_JABATAN_NORMALIZED) {
             userRole = "HSE";
+          } else if (jabatan.includes("manager") || jabatan.includes("mgr")) {
+            userRole = "Manager";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
           } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
@@ -305,11 +307,11 @@ export const AuthProvider = ({ children }) => {
 
         // Map job titles to roles
         if (result.data.data.user.Jabatan) {
-          const jabatan = result.data.data.user.Jabatan.toLowerCase();
-          if (jabatan.includes("manager") || jabatan.includes("mgr")) {
-            userRole = "Manager";
-          } else if (jabatan.includes("hse") || jabatan.includes("safety")) {
+          const jabatan = result.data.data.user.Jabatan.toLowerCase().trim();
+          if (jabatan === HSE_MANAGER_JABATAN_NORMALIZED) {
             userRole = "HSE";
+          } else if (jabatan.includes("manager") || jabatan.includes("mgr")) {
+            userRole = "Manager";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
           } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {
@@ -400,11 +402,11 @@ export const AuthProvider = ({ children }) => {
 
         // Map job titles to roles
         if (userData.Jabatan) {
-          const jabatan = userData.Jabatan.toLowerCase();
-          if (jabatan.includes("manager") || jabatan.includes("mgr")) {
-            userRole = "Manager";
-          } else if (jabatan.includes("hse") || jabatan.includes("safety")) {
+          const jabatan = userData.Jabatan.toLowerCase().trim();
+          if (jabatan === HSE_MANAGER_JABATAN_NORMALIZED) {
             userRole = "HSE";
+          } else if (jabatan.includes("manager") || jabatan.includes("mgr")) {
+            userRole = "Manager";
           } else if (jabatan.includes("apj") || jabatan.includes("assistant plant")) {
             userRole = "APJ";
           } else if (jabatan.includes("head of plant") || jabatan.includes("plant head") || jabatan === "pl") {

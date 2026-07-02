@@ -47,6 +47,7 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
   };
   
   const [activeTab, setActiveTab] = useState(getInitialTab());
+  const [requestNumberView, setRequestNumberView] = useState("all");
 
   // State for status filter (passed from Dashboard). Use `null` when no filter
   const [statusFilter, setStatusFilter] = useState(pageData?.statusFilter || null);
@@ -202,6 +203,8 @@ const DaftarAjuan = ({ onNavigate, pageData }) => {
         userRole={user?.role}
         currentUser={user}
         statusFilter={statusFilter}
+        requestNumberView={requestNumberView}
+        onRequestNumberViewChange={setRequestNumberView}
         allPermohonanAllowedStatuses={allPermohonanAllowedStatuses}
         allPermohonanScope={allPermohonanScope}
       />

@@ -68,6 +68,8 @@ const DataTable = ({
   userRole, 
   currentUser, 
   statusFilter = '',
+  requestNumberView = 'all',
+  onRequestNumberViewChange,
   allPermohonanAllowedStatuses = null,
   allPermohonanScope = null
 }) => {
@@ -130,8 +132,11 @@ const DataTable = ({
 
   // Reset page when viewMode changes
   useEffect(() => {
+    if (requestNumberView === "draft" || requestNumberView === "registered") {
+      setSelectedColumn("noPermohonan");
+    }
     setCurrentPage(1);
-  }, [viewMode]);
+  }, [viewMode, requestNumberView]);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -149,7 +154,8 @@ const DataTable = ({
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
             group: groupFilter,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            requestNumberView: requestNumberView
           });
         } else if (viewMode === "all-permohonan") {
           // All Permohonan tab - different scope based on user
@@ -171,7 +177,8 @@ const DataTable = ({
             selectedColumn: selectedColumn,
             userOnly: false,
             group: groupFilter,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            requestNumberView: requestNumberView
           };
           
           // Add status filter
@@ -203,7 +210,8 @@ const DataTable = ({
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
             group: groupFilter,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            requestNumberView: requestNumberView
           });
         } else if (viewMode === "rejected") {
           // Fetch rejected requests (only for HSE Manager)
@@ -213,7 +221,8 @@ const DataTable = ({
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
             group: groupFilter,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            requestNumberView: requestNumberView
           });
         } else if (viewMode === "verifikasi") {
           // Fetch verification requests (for HSE/KL team)
@@ -223,7 +232,8 @@ const DataTable = ({
             searchTerm: searchTerm,
             selectedColumn: selectedColumn,
             group: groupFilter,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            requestNumberView: requestNumberView
           });
         } else {
           // Dept. Requests tab - show all requests from user's department,
@@ -240,7 +250,8 @@ const DataTable = ({
             excludeCompleted: false,
             excludeRejected: true,
             group: groupFilter,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            requestNumberView: requestNumberView
           });
         }
         
@@ -259,7 +270,7 @@ const DataTable = ({
     };
 
     fetchRequests();
-  }, [currentPage, searchTerm, selectedColumn, user, refreshKey, viewMode, statusFilter, groupFilter, sortOrder]);
+  }, [currentPage, searchTerm, selectedColumn, user, refreshKey, viewMode, statusFilter, groupFilter, sortOrder, requestNumberView]);
 
   // Add event listener for data refresh
   useEffect(() => {
@@ -288,11 +299,26 @@ const DataTable = ({
     { value: "bobot", label: "Bobot (gram)" }
   ];
 
+  const requestNumberViewOptions = [
+    { value: "all", label: "Semua nomor" },
+    { value: "draft", label: "Draft / Request ID" },
+    { value: "registered", label: "No. Permohonan" }
+  ];
+
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
   const isApproverView = viewMode === 'pending-approvals' || viewMode === 'approved';
+  const searchPlaceholder = (() => {
+    if (selectedColumn === "noPermohonan" && requestNumberView === "draft") {
+      return "Search Request ID...";
+    }
+    if (selectedColumn === "noPermohonan" && requestNumberView === "registered") {
+      return "Search No. Permohonan...";
+    }
+    return selectedColumn ? `Search in ${columnOptions.find(col => col.value === selectedColumn)?.label}...` : "Search across all columns...";
+  })();
 
   // Render action buttons for a row. Keep logic centralized for readability.
   const renderActions = (item, isSameDept) => {
@@ -369,6 +395,15 @@ const DataTable = ({
     setCurrentPage(1);
   };
 
+  const handleRequestNumberViewChange = (e) => {
+    const nextView = e.target.value;
+    onRequestNumberViewChange && onRequestNumberViewChange(nextView);
+    if (nextView === "draft" || nextView === "registered") {
+      setSelectedColumn("noPermohonan");
+    }
+    setCurrentPage(1);
+  };
+
   const handleApprove = (id) => {
     setApproveModal({ isOpen: true, itemId: id, loading: false });
   };
@@ -387,7 +422,8 @@ const DataTable = ({
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
-            selectedColumn: selectedColumn
+            selectedColumn: selectedColumn,
+            requestNumberView: requestNumberView
           });
         } else {
           updatedResponse = await dataAPI.getDestructionRequests({
@@ -398,7 +434,8 @@ const DataTable = ({
             userOnly: false,
             deptOnly: !!(currentUser?.emp_DeptID || user?.emp_DeptID),
             userDept: currentUser?.emp_DeptID || user?.emp_DeptID || '',
-            excludeCompleted: false
+            excludeCompleted: false,
+            requestNumberView: requestNumberView
           });
         }
         if (updatedResponse.data.success) {
@@ -443,7 +480,8 @@ const DataTable = ({
             page: currentPage,
             limit: itemsPerPage,
             searchTerm: searchTerm,
-            selectedColumn: selectedColumn
+            selectedColumn: selectedColumn,
+            requestNumberView: requestNumberView
           });
         } else {
           updatedResponse = await dataAPI.getDestructionRequests({
@@ -454,7 +492,8 @@ const DataTable = ({
             userOnly: false,
             deptOnly: !!(currentUser?.emp_DeptID || user?.emp_DeptID),
             userDept: currentUser?.emp_DeptID || user?.emp_DeptID || '',
-            excludeCompleted: false
+            excludeCompleted: false,
+            requestNumberView: requestNumberView
           });
         }
         if (updatedResponse.data.success) {
@@ -495,7 +534,8 @@ const DataTable = ({
             userOnly: false,
             deptOnly: !!deptId,
             userDept: deptId,
-            excludeCompleted: false
+            excludeCompleted: false,
+            requestNumberView: requestNumberView
           });
           if (updatedResponse.data.success) {
             setData(updatedResponse.data.data);
@@ -528,7 +568,8 @@ const DataTable = ({
             userOnly: false,
             deptOnly: !!deptId,
             userDept: deptId,
-            excludeCompleted: false
+            excludeCompleted: false,
+            requestNumberView: requestNumberView
           });
           if (updatedResponse.data.success) {
             setData(updatedResponse.data.data);
@@ -559,28 +600,49 @@ const DataTable = ({
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Search and Filter Controls */}
       <div className="p-6 border-b border-gray-200 space-y-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-1 min-w-0">
+            {/* Request number view dropdown */}
+            <div className="relative w-full sm:w-56 shrink-0">
+              <select
+                value={requestNumberView}
+                onChange={handleRequestNumberViewChange}
+                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                title="Tampilan nomor"
+              >
+                {requestNumberViewOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <ChevronDownIcon />
+              </div>
+            </div>
+
           {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 min-w-0 max-w-md">
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
               <SearchIcon />
             </div>
             <input
               type="text"
-              placeholder={selectedColumn ? `Search in ${columnOptions.find(col => col.value === selectedColumn)?.label}...` : "Search across all columns..."}
+              placeholder={searchPlaceholder}
               value={searchTerm}
               onChange={handleSearchChange}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
+          </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
             {/* Column Filter Dropdown */}
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <select
                 value={selectedColumn}
                 onChange={handleColumnChange}
-                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 {columnOptions.map((column) => (
                   <option key={column.value} value={column.value}>
@@ -596,9 +658,14 @@ const DataTable = ({
         </div>
 
         {/* Filter Status Display */}
-        {(searchTerm || (selectedColumn && selectedColumn !== 'noPermohonan')) && (
+        {(searchTerm || requestNumberView !== 'all' || (selectedColumn && selectedColumn !== 'noPermohonan')) && (
           <div className="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
             <span>Filtering:</span>
+            {requestNumberView !== 'all' && (
+              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                Tampilan: {requestNumberViewOptions.find(option => option.value === requestNumberView)?.label}
+              </span>
+            )}
             {selectedColumn && selectedColumn !== 'noPermohonan' && (
               <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
                 Column: {columnOptions.find(col => col.value === selectedColumn)?.label}
@@ -613,6 +680,7 @@ const DataTable = ({
               onClick={() => {
                 setSearchTerm("");
                 setSelectedColumn("noPermohonan");
+                onRequestNumberViewChange && onRequestNumberViewChange("all");
                 setCurrentPage(1);
               }}
               className="text-red-600 hover:text-red-800 text-xs underline"

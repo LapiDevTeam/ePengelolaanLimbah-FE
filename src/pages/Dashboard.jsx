@@ -900,8 +900,8 @@ const Dashboard = ({ onNavigate, pendingApprovalByGroup = { 'limbah-b3': 0, 'rec
         <div className="mt-4 text-sm text-blue-600">
           <p>• Logbook akan mengelompokkan data berdasarkan jenis limbah</p>
           <p>• Setiap jenis limbah akan memiliki sheet terpisah</p>
-          <p>• Data diambil dari permohonan dengan status Completed</p>
-          <p>• Pilih golongan untuk memfilter data, atau pilih "Semua Golongan" untuk semua data</p>
+          <p>• Data diambil dari permohonan setelah 4 step verifikasi lapangan selesai, dari Waiting HSE Manager sampai Completed</p>
+          <p>• Pilih golongan untuk memfilter data</p>
           <p className="font-semibold">• Fitur ini hanya tersedia untuk user KL</p>
         </div>
       </div>

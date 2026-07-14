@@ -19,6 +19,7 @@ import RejectModal from "../components/RejectModal";
 import ApproveModal from "../components/ApproveModal";
 import WorkflowSteps from "../components/WorkflowSteps";
 import { showSuccess, showError, showInfo } from "../utils/sweetAlert";
+import { showApiError } from "../utils/errorUi";
 import { 
   getJenisDisplayName, 
   getStatusDisplayName, 
@@ -265,7 +266,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {}, asModal =
           window.location.href = '/daftar-ajuan';
         }
       } else {
-        showError("Failed to approve: " + response.data.message);
+        await showApiError(response.data, "Failed to approve");
       }
     } catch (error) {
       console.error("Error approving request:", error);
@@ -294,7 +295,7 @@ const DetailAjuan = ({ onNavigate, applicationId, navigationData = {}, asModal =
         refreshData();
         window.dispatchEvent(new CustomEvent('ajuanDataRefresh'));
       } else {
-        showError("Failed to reject: " + response.data.message);
+        await showApiError(response.data, "Failed to reject");
         setRejectModal(prev => ({ ...prev, loading: false }));
       }
     } catch (error) {

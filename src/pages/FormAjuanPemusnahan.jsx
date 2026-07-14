@@ -36,6 +36,7 @@ import {
   NAMA_LIMBAH_PRODUK_OPTIONS
 } from "../constants/referenceData";
 import { useConfigContext } from "../contexts/ConfigContext";
+import { showApiError } from "../utils/errorUi";
 
 const initialDetail = {
   noDokumen: "", // maps to nomor_referensi
@@ -632,7 +633,7 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
           onNavigate('daftar-ajuan');
         }
       } else {
-        showError("Gagal submit permohonan: " + response.data.message);
+        await showApiError(response.data, "Gagal submit permohonan");
       }
     } catch (error) {
       console.error("Error submitting request:", error);
@@ -718,7 +719,7 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
           }
         }
       } else {
-        showError("Failed to save: " + response.data.message);
+        await showApiError(response.data, "Failed to save");
       }
     } catch (error) {
       console.error("Error saving draft:", error);

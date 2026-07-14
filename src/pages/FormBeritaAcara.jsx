@@ -3,6 +3,7 @@ import { dataAPI } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { toJakartaIsoFromLocal, formatDateID, formatDateTimeID, formatTimeID, formatTimeHHMM } from "../utils/time";
 import { showSuccess, showError, showWarning, showInfo, showConfirmation } from "../utils/sweetAlert";
+import { showApiError } from "../utils/errorUi";
 import { isPemohon as checkIsPemohon } from "../constants/accessRights";
 
 // Simple CSS icons as components
@@ -404,7 +405,7 @@ const FormBeritaAcara = ({ onNavigate, group }) => {
           onNavigate("berita-acara");
         }
       } else {
-        showError("Error: " + (response.data.message || "Failed to create berita acara"));
+        await showApiError(response.data, "Failed to create berita acara");
       }
     } catch (error) {
       console.error('Error creating berita acara:', error);

@@ -15,6 +15,7 @@ import {
   DEFAULT_GOLONGAN_OPTIONS
 } from "../constants/referenceData";
 import { showSuccess, showError, showConfirmation } from "../utils/sweetAlert";
+import { showApiError } from "../utils/errorUi";
 import { 
   isPemohon as checkIsPemohon,
   isManager as checkIsManager,
@@ -443,7 +444,7 @@ const DataTable = ({
           setTotalItems(updatedResponse.data.pagination.total);
         }
       } else {
-        showError("Failed to approve: " + response.data.message);
+        await showApiError(response.data, "Failed to approve");
       }
     } catch (error) {
       console.error("Error approving request:", error);
@@ -503,7 +504,7 @@ const DataTable = ({
         // Close modal
         setRejectModal({ isOpen: false, itemId: null, loading: false });
       } else {
-        showError("Failed to reject: " + response.data.message);
+        await showApiError(response.data, "Failed to reject");
         setRejectModal(prev => ({ ...prev, loading: false }));
       }
     } catch (error) {
@@ -542,7 +543,7 @@ const DataTable = ({
             setTotalItems(updatedResponse.data.pagination.total);
           }
         } else {
-          showError("Failed to delete: " + response.data.message);
+          await showApiError(response.data, "Failed to delete");
         }
       } catch (error) {
         console.error("Error deleting request:", error);
@@ -576,7 +577,7 @@ const DataTable = ({
             setTotalItems(updatedResponse.data.pagination.total);
           }
         } else {
-          showError("Failed to submit: " + response.data.message);
+          await showApiError(response.data, "Failed to submit");
         }
       } catch (error) {
         console.error("Error submitting request:", error);

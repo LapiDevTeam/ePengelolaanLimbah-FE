@@ -17,6 +17,13 @@ const getAuthToken = () => {
   return sessionStorage.getItem('access_token') || localStorage.getItem('token');
 };
 
+const createApiError = (error, fallbackMessage) => ({
+  success: false,
+  message: error.response?.data?.message || fallbackMessage,
+  error_report_id: error.response?.data?.error_report_id || null,
+  error_reported: error.response?.data?.error_reported || false
+});
+
 // Add request interceptor to include auth token from session
 api.interceptors.request.use(
   (config) => {
@@ -235,10 +242,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to create destruction request'
-        }
+        data: createApiError(error, 'Failed to create destruction request')
       };
     }
   },
@@ -256,10 +260,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to save draft'
-        }
+        data: createApiError(error, 'Failed to save draft')
       };
     }
   },
@@ -297,10 +298,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to update destruction request'
-        }
+        data: createApiError(error, 'Failed to update destruction request')
       };
     }
   },
@@ -317,10 +315,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to delete destruction request'
-        }
+        data: createApiError(error, 'Failed to delete destruction request')
       };
     }
   },
@@ -338,10 +333,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to submit destruction request'
-        }
+        data: createApiError(error, 'Failed to submit destruction request')
       };
     }
   },
@@ -349,8 +341,8 @@ export const dataAPI = {
   // Approve destruction request
   // Accept optional verifier metadata (verifierId, verifierName, verifierJabatan)
   approveDestructionRequest: async (id, comments = 'Approved', verifier = {}) => {
+    let payload = { comments };
     try {
-      const payload = { comments };
       if (verifier.verifierId) payload.verifierId = verifier.verifierId;
       if (verifier.verifierName) payload.verifierName = verifier.verifierName;
       if (verifier.verifierJabatan) payload.verifierJabatan = verifier.verifierJabatan;
@@ -366,10 +358,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to approve destruction request'
-        }
+        data: createApiError(error, 'Failed to approve destruction request')
       };
     }
   },
@@ -377,8 +366,8 @@ export const dataAPI = {
   // Reject destruction request - supports optional verifier metadata when frontend
   // authenticates a verifier locally in a modal (verifierId, verifierName, verifierJabatan)
   rejectDestructionRequest: async (id, reason, verifier = {}) => {
+    let payload = { alasan_penolakan: reason };
     try {
-      const payload = { alasan_penolakan: reason };
       if (verifier.verifierId) payload.verifierId = verifier.verifierId;
       if (verifier.verifierName) payload.verifierName = verifier.verifierName;
       if (verifier.verifierJabatan) payload.verifierJabatan = verifier.verifierJabatan;
@@ -394,10 +383,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to reject destruction request'
-        }
+        data: createApiError(error, 'Failed to reject destruction request')
       };
     }
   },
@@ -792,10 +778,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to create berita acara'
-        }
+        data: createApiError(error, 'Failed to create berita acara')
       };
     }
   },
@@ -854,10 +837,7 @@ export const dataAPI = {
       };
     } catch (error) {
       return {
-        data: {
-          success: false,
-          message: error.response?.data?.message || 'Failed to sign berita acara'
-        }
+        data: createApiError(error, 'Failed to sign berita acara')
       };
     }
   },

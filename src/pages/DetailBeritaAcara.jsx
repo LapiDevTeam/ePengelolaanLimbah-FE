@@ -16,6 +16,7 @@ import {
 import { getDownloadLampiranOptions } from "../constants/accessRights";
 import SigningWorkflowSteps from "../components/SigningWorkflowSteps";
 import { showSuccess, showError, showConfirmation } from "../utils/sweetAlert";
+import { showApiError } from "../utils/errorUi";
 
 // Use centralized Jakarta formatters so displayed timestamps match stored Jakarta wall-clock
 
@@ -469,7 +470,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {} }) =
         showSuccess(response.data.message || "Berita Acara signed successfully!");
         window.location.reload();
       } else {
-        showError("Error: " + (response.data.message || "Failed to sign berita acara"));
+        await showApiError(response.data, "Failed to sign berita acara");
       }
     } catch (error) {
       console.error("Error signing berita acara:", error);

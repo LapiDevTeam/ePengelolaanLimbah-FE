@@ -13,6 +13,7 @@ import {
   DEFAULT_GOLONGAN_OPTIONS
 } from "../constants/referenceData";
 import { showSuccess, showError } from "../utils/sweetAlert";
+import { showApiError } from "../utils/errorUi";
 
 // Simple CSS icons as components
 const SearchIcon = () => (
@@ -185,7 +186,7 @@ const PendingApprovals = ({ onNavigate }) => {
           setTotalItems(updatedResponse.data.pagination.total);
         }
       } else {
-        showError("Failed to approve: " + response.data.message);
+        await showApiError(response.data, "Failed to approve");
       }
     } catch (error) {
       console.error("Error approving request:", error);
@@ -229,7 +230,7 @@ const PendingApprovals = ({ onNavigate }) => {
         // Close modal
         setRejectModal({ isOpen: false, itemId: null, loading: false });
       } else {
-        showError("Failed to reject: " + response.data.message);
+        await showApiError(response.data, "Failed to reject");
         setRejectModal(prev => ({ ...prev, loading: false }));
       }
     } catch (error) {

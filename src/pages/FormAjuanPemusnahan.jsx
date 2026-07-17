@@ -57,6 +57,14 @@ function formatDateToDDMMYYYY(dateStr) {
   return formatDateID(dateStr) || String(dateStr);
 }
 
+const parseDecimalInput = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const normalizedValue = String(value).trim().replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(normalizedValue)) return null;
+  const parsedValue = parseFloat(normalizedValue);
+  return Number.isNaN(parsedValue) ? null : parsedValue;
+};
+
 const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
   const { user } = useAuth();
   
@@ -521,6 +529,8 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
       }
       if (!detail.jumlahBarang.trim()) {
         errors.push(`Item ${itemNumber}: Jumlah barang wajib diisi`);
+      } else if (parseDecimalInput(detail.jumlahBarang) === null) {
+        errors.push(`Item ${itemNumber}: Jumlah barang harus berupa angka`);
       }
       if (!detail.satuan.trim()) {
         errors.push(`Item ${itemNumber}: Satuan wajib diisi`);
@@ -578,6 +588,8 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
       }
       if (!detail.jumlahBarang.trim()) {
         errors.push(`Item ${itemNumber}: Jumlah barang wajib diisi`);
+      } else if (parseDecimalInput(detail.jumlahBarang) === null) {
+        errors.push(`Item ${itemNumber}: Jumlah barang harus berupa angka`);
       }
       if (!detail.satuan.trim()) {
         errors.push(`Item ${itemNumber}: Satuan wajib diisi`);
@@ -658,7 +670,7 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
         nomor_analisa: detail.noBets, // noBets maps to nomor_analisa (No. Bets/No. Analisa)
         nomor_referensi: detail.noDokumen, // noDokumen maps to nomor_referensi
         nomor_wadah: detail.noWadah ? parseInt(detail.noWadah) : null,
-        jumlah_barang: detail.jumlahBarang ? parseInt(detail.jumlahBarang) : null,
+        jumlah_barang: parseDecimalInput(detail.jumlahBarang),
         satuan: detail.satuan,
         bobot: detail.bobot ? parseFloat(detail.bobot) : 0,
         alasan_pemusnahan: detail.alasan
@@ -1086,7 +1098,8 @@ const FormAjuanPemusnahan = ({ onNavigate, editId = null }) => {
                                 value={detail.jumlahBarang}
                                 onChange={e => handleDetailChange(idx, e)}
                                 placeholder="Jumlah Barang"
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                               />
                             </td>
                             <td className="px-2 py-2">

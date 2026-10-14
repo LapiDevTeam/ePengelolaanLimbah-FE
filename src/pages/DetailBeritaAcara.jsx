@@ -51,6 +51,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {}, asM
   const [signingWorkflow, setSigningWorkflow] = useState([]);
   const [canSign, setCanSign] = useState(false);
   const [beritaAcaraLoading, setBeritaAcaraLoading] = useState(false);
+  const [canGenerateBeritaAcara, setCanGenerateBeritaAcara] = useState(false);
   const [excelLoadingStates, setExcelLoadingStates] = useState({});
   const [permohonanLoadingStates, setPermohonanLoadingStates] = useState({});
 
@@ -61,6 +62,41 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {}, asM
 
   useEffect(() => {
   }, [verificationTimeRange]);
+
+  // Same rule as the "Tambah Berita Acara" button (BeritaAcara.jsx): KL (Appr_No 1/2) all groups,
+  // QA (Appr_No 3) only 'recall', PN1 (Appr_No 3) only 'recall-precursor'
+  useEffect(() => {
+    let mounted = true;
+    const checkGenerateAccess = async () => {
+      try {
+        const res = await dataAPI.getExternalApprovalList(null);
+        if (!res.data?.success) {
+          if (mounted) setCanGenerateBeritaAcara(false);
+          return;
+        }
+        const myNik = user && (user.log_NIK || user.emp_NIK || user.log_nik || user.NIK);
+        const myEntries = (res.data.data || []).filter(
+          (i) =>
+            String(i.Appr_ApplicationCode || "") === "ePengelolaan_Limbah_Berita_Acara" &&
+            String(i.Appr_ID) === String(myNik)
+        );
+        const inDept = (dept, apprNos) =>
+          myEntries.some(
+            (e) => apprNos.includes(Number(e.Appr_No)) && String((e.Appr_DeptID || "").toUpperCase()) === dept
+          );
+        const allowed =
+          inDept("KL", [1, 2]) ||
+          (group === "recall" && inDept("QA", [3])) ||
+          (group === "recall-precursor" && inDept("PN1", [3]));
+        if (mounted) setCanGenerateBeritaAcara(allowed);
+      } catch (err) {
+        console.error("Error checking generate permission:", err);
+        if (mounted) setCanGenerateBeritaAcara(false);
+      }
+    };
+    checkGenerateAccess();
+    return () => { mounted = false; };
+  }, [user, group]);
 
   // Fetch berita acara detail
   useEffect(() => {
@@ -757,7 +793,7 @@ const DetailBeritaAcara = ({ onNavigate, beritaAcaraId, navigationData = {}, asM
             <p className="mt-2 text-gray-600">{getDescription()}</p>
           </div>
           <div className="flex gap-3">
-            {data?.status === "Completed" && (
+            {data?.status === "Completed" && canGenerateBeritaAcara && (
               <>
                 <button
                   onClick={handleGenerateBeritaAcara}
